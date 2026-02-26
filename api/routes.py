@@ -11,6 +11,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from core.data_models import FraudSignal, TridentResult
 from core.trident import TRIDENT
+from datetime import datetime
+import threading
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +109,35 @@ async def analyze_url(
         return trident.url_detect.detect_malicious(url)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+# Simple in-memory alerts store for local dev / UI popups.
+# In production this should be backed by a durable store (Postgres/Redis).
+_alerts: list = []
+_alerts_lock = threading.Lock()
+
+
+@app.post("/alerts", tags=["Alerts"])
+async def push_alert(alert: Dict) -> Dict:
+    """Push a small alert object (used by ingest runners)"""
+    # Basic validation (expecting keys: subject, sender, risk_score, risk_band)
+    if not isinstance(alert, dict):
+        raise HTTPException(status_code=400, detail="alert must be a JSON object")
+    entry = {"received_at": datetime.utcnow().isoformat() + "Z", "alert": alert}
+    with _alerts_lock:
+        _alerts.append(entry)
+        # keep last 200
+        if len(_alerts) > 200:
+            _alerts[:] = _alerts[-200:]
+    return {"status": "ok", "stored": True}
+
+
+@app.get("/alerts", tags=["Alerts"])
+async def get_alerts(limit: int = 10) -> Dict:
+    """Return recent alerts (most recent first)."""
+    with _alerts_lock:
+        items = list(reversed(_alerts[-limit:]))
+    return {"count": len(items), "alerts": items}
 
 
 @app.post("/scan-file", tags=["Detection"])
