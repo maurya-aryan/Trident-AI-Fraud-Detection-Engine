@@ -18,6 +18,11 @@ import json
 import requests
 from typing import Optional
 
+# Ensure project root is on sys.path when running the script directly so
+# imports like `ingest.*` resolve correctly even when Python's cwd is `scripts/`.
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from ingest.imap_adapter import parse_email_bytes
 
 
