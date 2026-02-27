@@ -3,7 +3,6 @@
 This module intentionally uses only the stdlib email parser so the repo
 doesn't require extra heavy dependencies for basic local testing.
 """
-from __future__ import annotations
 
 from email import policy
 from email.parser import BytesParser
@@ -30,9 +29,9 @@ def parse_email_bytes(raw_bytes: bytes) -> Signal:
 
     # Extract text/plain if available else fallback to html (stripped)
     parsed_text = None
+    attachments: List[Dict[str, Any]] = []
     if msg.is_multipart():
-        parts = []
-        attachments: List[Dict[str, Any]] = []
+        parts: List[str] = []
         for part in msg.walk():
             ctype = part.get_content_type()
             disp = str(part.get_content_disposition() or "")
@@ -51,7 +50,6 @@ def parse_email_bytes(raw_bytes: bytes) -> Signal:
             parsed_text = msg.get_content()
         except Exception:
             parsed_text = None
-        attachments = []
 
     sig = Signal(
         source="email",

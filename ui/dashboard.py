@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import streamlit as st
 import streamlit.components.v1 as components
 import plotly.graph_objects as go
+import requests
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -340,6 +341,43 @@ for col, (icon, name) in zip(st.columns(9), mod_info):
     """, unsafe_allow_html=True)
 
 st.markdown("<div style='margin-top:24px'></div>", unsafe_allow_html=True)
+
+# ── Live alerts panel (poll via backend `/alerts`) ─────────────────────────────
+ALERTS_API = os.environ.get("TRIDENT_ALERTS_URL", "http://127.0.0.1:8000/alerts")
+
+def fetch_alerts(limit: int = 5):
+  try:
+    resp = requests.get(ALERTS_API, params={"limit": limit}, timeout=3)
+    resp.raise_for_status()
+    data = resp.json()
+    return data.get("alerts", [])
+  except Exception:
+    return []
+
+with st.container():
+  a1, a2 = st.columns([3, 1])
+  with a1:
+    st.write("")
+  with a2:
+    st.markdown("<div style='text-align:right'>", unsafe_allow_html=True)
+    if st.button("Refresh alerts"):
+      st.experimental_rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
+
+latest_alerts = fetch_alerts(8)
+if latest_alerts:
+  with st.expander(f"Live alerts ({len(latest_alerts)})", expanded=False):
+    for entry in latest_alerts:
+      rec = entry.get("alert", {})
+      ts = entry.get("received_at", "")
+      subj = rec.get("subject") or "(no subject)"
+      sender = rec.get("sender") or "(unknown)"
+      band = rec.get("risk_band") or ""
+      score = rec.get("risk_score") or 0
+      st.markdown(f"**{band}** · {score:.0f}/100 — **{subj}**  ")
+      st.markdown(f"*From:* {sender} · *At:* {ts}")
+      st.markdown("---")
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TABS
