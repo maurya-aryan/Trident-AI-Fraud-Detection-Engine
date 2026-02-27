@@ -112,17 +112,20 @@ def run():
                     if result:
                         band = result.get("risk_band")
                         score = result.get("risk_score", 0)
+                        # Always push every processed email to /alerts so the
+                        # dashboard shows the full picture, not only HIGH/CRITICAL.
+                        alert = {
+                            "subject": sig.subject,
+                            "sender": sig.sender,
+                            "snippet": (sig.parsed_text or "")[:240],
+                            "risk_band": band,
+                            "risk_score": score,
+                            "trident_result": result,
+                        }
+                        print(f"[poller] alert queued: {band} score={score:.1f} — {sig.subject}")
+                        push_alert(alert)
+                        # Windows toast popup only for HIGH / CRITICAL
                         if band in ("HIGH", "CRITICAL"):
-                            alert = {
-                                "subject": sig.subject,
-                                "sender": sig.sender,
-                                "snippet": (sig.parsed_text or "")[:240],
-                                "risk_band": band,
-                                "risk_score": score,
-                                "trident_result": result,
-                            }
-                            print(f"[poller] pushing alert: {band} {score}")
-                            push_alert(alert)
                             maybe_toast(f"TRIDENT: {band} alert", f"{sig.subject} — {score:.0f}/100")
 
                     # Mark seen regardless to avoid reprocessing
