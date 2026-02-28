@@ -140,6 +140,15 @@ async def get_alerts(limit: int = 10) -> Dict:
     return {"count": len(items), "alerts": items}
 
 
+@app.delete("/alerts", tags=["Alerts"])
+async def clear_alerts() -> Dict:
+    """Clear all stored alerts."""
+    with _alerts_lock:
+        count = len(_alerts)
+        _alerts.clear()
+    return {"status": "ok", "cleared": count}
+
+
 @app.post("/scan-file", tags=["Detection"])
 async def scan_file(file: UploadFile = File(...)) -> Dict:
     """Upload and scan a file for malware / threats."""
