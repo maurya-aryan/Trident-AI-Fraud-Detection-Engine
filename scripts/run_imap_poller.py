@@ -30,6 +30,8 @@ IMAP_HOST = os.environ.get("IMAP_HOST", "imap.gmail.com")
 IMAP_USER = os.environ.get("IMAP_USER")
 IMAP_PASSWORD = os.environ.get("IMAP_PASSWORD")
 POLL_INTERVAL = int(os.environ.get("IMAP_POLL_INTERVAL", "12"))
+# Control whether the poller marks messages as seen. Accepts '1','true','yes' to enable.
+IMAP_MARK_SEEN = str(os.environ.get("IMAP_MARK_SEEN", "true")).lower() in ("1", "true", "yes")
 TRIDENT_URL = os.environ.get("TRIDENT_URL", "http://127.0.0.1:8000/detect")
 ALERTS_URL = os.environ.get("ALERTS_URL", "http://127.0.0.1:8000/alerts")
 
@@ -125,8 +127,9 @@ def run():
                             push_alert(alert)
                             maybe_toast(f"TRIDENT: {band} alert", f"{sig.subject} — {score:.0f}/100")
 
-                    # Mark seen regardless to avoid reprocessing
-                    mark_seen(imap, uid)
+                    # Mark seen optionally to avoid reprocessing (controlled by IMAP_MARK_SEEN)
+                    if IMAP_MARK_SEEN:
+                        mark_seen(imap, uid)
                 except Exception as exc:
                     print("[poller] failed to process message:", exc)
             time.sleep(POLL_INTERVAL)
