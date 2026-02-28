@@ -345,24 +345,18 @@ st.markdown("<div style='margin-top:24px'></div>", unsafe_allow_html=True)
 # ── Live alerts panel (poll via backend `/alerts`) ─────────────────────────────
 ALERTS_API = os.environ.get("TRIDENT_ALERTS_URL", "http://127.0.0.1:8000/alerts")
 
-def fetch_alerts(limit: int = 5):
-  try:
-    resp = requests.get(ALERTS_API, params={"limit": limit}, timeout=3)
-    resp.raise_for_status()
-    data = resp.json()
-    return data.get("alerts", [])
-  except Exception:
-    return []
+_BAND_COLOR  = {"CRITICAL": "#ff0040", "HIGH": "#ff6b00", "MEDIUM": "#ffbf00", "LOW": "#00e676"}
+_BAND_BG     = {"CRITICAL": "rgba(255,0,64,0.10)", "HIGH": "rgba(255,107,0,0.10)",
+                "MEDIUM": "rgba(255,191,0,0.08)", "LOW": "rgba(0,230,118,0.07)"}
+_BAND_ICON   = {"CRITICAL": "🚨", "HIGH": "⚠️", "MEDIUM": "🔶", "LOW": "✅"}
 
-with st.container():
-  a1, a2 = st.columns([3, 1])
-  with a1:
-    st.write("")
-  with a2:
-    st.markdown("<div style='text-align:right'>", unsafe_allow_html=True)
-    if st.button("Refresh alerts"):
-      st.experimental_rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
+def fetch_alerts(limit: int = 30):
+    try:
+        resp = requests.get(ALERTS_API, params={"limit": limit}, timeout=3)
+        resp.raise_for_status()
+        return resp.json().get("alerts", [])
+    except Exception:
+        return []
 
 latest_alerts = fetch_alerts(8)
 if latest_alerts:

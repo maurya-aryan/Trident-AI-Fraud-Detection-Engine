@@ -41,7 +41,15 @@ CREDENTIAL_PATTERNS: List[tuple] = [
     ),
     (
         "credit_card",
-        re.compile(r"\b\d{4}[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}\b"),
+        re.compile(
+            # Require at least one separator (space/dash) between groups, OR
+            # start with a known card prefix (4=Visa, 5=MC, 34/37=Amex, 6011=Discover).
+            # This drastically cuts false positives from plain 16-digit sequences.
+            r"\b(?:"
+            r"(?:4\d{3}|5[1-5]\d{2}|6011|3[47]\d{2})[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}"
+            r"|\d{4}[\s\-]\d{4}[\s\-]\d{4}[\s\-]\d{4}"
+            r")\b"
+        ),
         "Credit card number",
     ),
     (
