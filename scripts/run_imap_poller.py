@@ -11,6 +11,7 @@ from typing import Optional
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import config
 from ingest.imap_adapter import parse_email_bytes
 from ingest.imap_processor import IMAPProcessor
 

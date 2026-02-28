@@ -33,10 +33,14 @@ RISK_BANDS = [
 
 
 def _classify(score: float):
-    for lo, hi, band, action in RISK_BANDS:
-        if lo <= score <= hi:
-            return band, action
-    return "LOW", "VERIFY"
+    if score >= 75.0:
+        return "CRITICAL", "BLOCK"
+    elif score >= 50.0:
+        return "HIGH", "ESCALATE"
+    elif score >= 20.0:
+        return "MEDIUM", "WARN"
+    else:
+        return "LOW", "VERIFY"
 
 
 class FusionModel:

@@ -1,5 +1,7 @@
 import os
-from core.data_models import Signal
+from typing import Optional
+from ingest.models import Signal
+from ingest.imap_adapter import parse_email_bytes
 
 class IMAPProcessor:
     def __init__(self, file_path: str):
@@ -17,9 +19,10 @@ class IMAPProcessor:
             f.write('\n'.join(self.processed_uids))
 
     def process_email(self, uid: bytes, raw_bytes: bytes) -> Optional[Signal]:
-        if uid in self.processed_uids:
+        uid_str = uid.decode() if isinstance(uid, bytes) else str(uid)
+        if uid_str in self.processed_uids:
             return None
         signal = parse_email_bytes(raw_bytes)
-        self.processed_uids.add(uid)
+        self.processed_uids.add(uid_str)
         self.save_processed_uids()
         return signal
