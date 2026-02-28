@@ -71,7 +71,7 @@ INJECTION_PATTERNS = [
     r"system\s+prompt",
     r"dan\s+mode",
     r"jailbreak",
-    r"forget\s+(?:all\s+)?instructions",
+    r"forget\s+(?:all\s+)?(?:instructions|memory)",
     r"show\s+me\s+(?:the\s+)?(?:api|key|secret|password)",
     r"enable\s+developer\s+mode",
     r"you\s+are\s+now\s+(?:an?\s+)?(?:unrestricted|free|evil)",
@@ -99,3 +99,15 @@ FINANCIAL_DOMAINS = {
 
 # Logging
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
+# IMAP configuration
+IMAP_HOST = os.environ.get("IMAP_HOST", "imap.gmail.com")
+IMAP_USER = os.environ.get("IMAP_USER")
+IMAP_PASSWORD = os.environ.get("IMAP_PASSWORD")
+POLL_INTERVAL = int(os.environ.get("IMAP_POLL_INTERVAL", "12"))
+IMAP_MARK_SEEN = str(os.environ.get("IMAP_MARK_SEEN", "false")).lower() in ("1", "true", "yes")
+IMAP_PROCESSOR_FILE = os.getenv("IMAP_PROCESSOR_FILE", "processed_uids.txt")
+
+# API URLs
+TRIDENT_URL = os.environ.get("TRIDENT_URL", "http://127.0.0.1:8000/detect")
+ALERTS_URL = os.environ.get("ALERTS_URL", "http://127.0.0.1:8000/alerts")

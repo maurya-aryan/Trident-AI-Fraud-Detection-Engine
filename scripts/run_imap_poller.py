@@ -1,15 +1,3 @@
-"""Run a simple IMAP poller that posts new emails to the TRIDENT API.
-
-Usage: set environment variables IMAP_HOST, IMAP_USER, IMAP_PASSWORD and run
-       python scripts/run_imap_poller.py
-
-The script will poll the INBOX for unseen messages, post their text to
-`/detect` as a FraudSignal, and when a high/critical alert is returned it
-will also push a small alert to `/alerts`. Optionally shows a Windows toast
-if `win10toast` is installed.
-"""
-from __future__ import annotations
-
 import os
 import time
 import imaplib
@@ -24,17 +12,15 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from ingest.imap_adapter import parse_email_bytes
-
+from ingest.imap_processor import IMAPProcessor
 
 IMAP_HOST = os.environ.get("IMAP_HOST", "imap.gmail.com")
 IMAP_USER = os.environ.get("IMAP_USER")
 IMAP_PASSWORD = os.environ.get("IMAP_PASSWORD")
 POLL_INTERVAL = int(os.environ.get("IMAP_POLL_INTERVAL", "12"))
-# Control whether the poller marks messages as seen. Accepts '1','true','yes' to enable.
-IMAP_MARK_SEEN = str(os.environ.get("IMAP_MARK_SEEN", "true")).lower() in ("1", "true", "yes")
+IMAP_MARK_SEEN = str(os.environ.get("IMAP_MARK_SEEN", "false")).lower() in ("1", "true", "yes")
 TRIDENT_URL = os.environ.get("TRIDENT_URL", "http://127.0.0.1:8000/detect")
 ALERTS_URL = os.environ.get("ALERTS_URL", "http://127.0.0.1:8000/alerts")
-
 
 def maybe_toast(title: str, msg: str):
     try:
@@ -46,7 +32,6 @@ def maybe_toast(title: str, msg: str):
         # win10toast not available or running on non-Windows; ignore
         return
 
-
 def post_detect(payload: dict) -> Optional[dict]:
     try:
         resp = requests.post(TRIDENT_URL, json=payload, timeout=20)
@@ -56,20 +41,15 @@ def post_detect(payload: dict) -> Optional[dict]:
         print("[poller] error posting to detect:", exc)
         return None
 
-
 def push_alert(alert: dict) -> None:
     try:
         requests.post(ALERTS_URL, json=alert, timeout=6)
     except Exception:
         pass
 
-
 def mark_seen(imap: imaplib.IMAP4_SSL, uid: bytes):
-    try:
-        imap.store(uid, "+FLAGS", "\\Seen")
-    except Exception:
-        pass
-
+    if IMAP_MARK_SEEN:
+        imap.uid('STORE', uid, '+FLAGS', '\\Seen')
 
 def run():
     if not IMAP_USER or not IMAP_PASSWORD:
@@ -80,6 +60,8 @@ def run():
     imap = imaplib.IMAP4_SSL(IMAP_HOST)
     imap.login(IMAP_USER, IMAP_PASSWORD)
     imap.select("INBOX")
+
+    imap_processor = IMAPProcessor(config.IMAP_PROCESSOR_FILE)
 
     try:
         while True:
@@ -98,34 +80,37 @@ def run():
                     if typ != 'OK' or not msg_data:
                         continue
                     raw = msg_data[0][1]
-                    sig = parse_email_bytes(raw)
+                    signal = imap_processor.process_email(uid, raw)
+                    if signal is None:
+                        print(f"[poller] message already processed: {uid}")
+                        continue
 
                     # Build FraudSignal-compatible payload
                     payload = {
-                        "email_text": sig.parsed_text,
-                        "email_subject": sig.subject,
-                        "sender": sig.sender,
-                        "timestamp": sig.timestamp,
-                        "metadata": sig.metadata,
+                        "email_text": signal.parsed_text,
+                        "email_subject": signal.subject,
+                        "sender": signal.sender,
+                        "timestamp": signal.timestamp,
+                        "metadata": signal.metadata,
                     }
 
-                    print(f"[poller] posting message from {sig.sender} subject={sig.subject}")
+                    print(f"[poller] posting message from {signal.sender} subject={signal.subject}")
                     result = post_detect(payload)
                     if result:
                         band = result.get("risk_band")
                         score = result.get("risk_score", 0)
                         if band in ("HIGH", "CRITICAL"):
                             alert = {
-                                "subject": sig.subject,
-                                "sender": sig.sender,
-                                "snippet": (sig.parsed_text or "")[:240],
+                                "subject": signal.subject,
+                                "sender": signal.sender,
+                                "snippet": (signal.parsed_text or "")[:240],
                                 "risk_band": band,
                                 "risk_score": score,
                                 "trident_result": result,
                             }
                             print(f"[poller] pushing alert: {band} {score}")
                             push_alert(alert)
-                            maybe_toast(f"TRIDENT: {band} alert", f"{sig.subject} — {score:.0f}/100")
+                            maybe_toast(f"TRIDENT: {band} alert", f"{signal.subject} — {score:.0f}/100")
 
                     # Mark seen optionally to avoid reprocessing (controlled by IMAP_MARK_SEEN)
                     if IMAP_MARK_SEEN:
@@ -138,7 +123,6 @@ def run():
             imap.logout()
         except Exception:
             pass
-
 
 if __name__ == '__main__':
     run()
