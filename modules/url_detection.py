@@ -138,6 +138,26 @@ class URLDetector:
     def __init__(self):
         self.model = None
         self._trained = False
+        # Try to load a saved URL model first
+        try:
+            import xgboost as xgb
+            from pathlib import Path
+
+            mp = Path("data/models/url_detector_v2.json")
+            if mp.exists():
+                m = xgb.XGBClassifier()
+                try:
+                    m.load_model(str(mp))
+                    self.model = m
+                    self._trained = True
+                    logger.info(f"Loaded URL detection model from {mp}")
+                    return
+                except Exception:
+                    logger.warning(f"Failed to load URL model from {mp}; will train on synthetic data.")
+        except Exception:
+            pass
+
+        # Fallback: train on small synthetic dataset if xgboost available
         self._train_on_synthetic()
 
     def _train_on_synthetic(self) -> None:

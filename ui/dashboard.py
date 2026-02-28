@@ -374,8 +374,46 @@ if latest_alerts:
       sender = rec.get("sender") or "(unknown)"
       band = rec.get("risk_band") or ""
       score = rec.get("risk_score") or 0
+      # Summary line
       st.markdown(f"**{band}** · {score:.0f}/100 — **{subj}**  ")
       st.markdown(f"*From:* {sender} · *At:* {ts}")
+
+      # Expandable debug/details section (module scores + details)
+      try:
+        with st.expander("Show details", expanded=False):
+          tr = rec.get("trident_result", {})
+          # module_scores is the most useful quick-debug info
+          ms = tr.get("module_scores") if isinstance(tr, dict) else None
+          md = tr.get("module_details") if isinstance(tr, dict) else None
+          if ms:
+            st.markdown("**Module scores (normalised 0-100):**")
+            try:
+              st.json(ms)
+            except Exception:
+              st.write(ms)
+          if md:
+            st.markdown("**Module details (raw):**")
+            try:
+              st.json(md)
+            except Exception:
+              st.write(md)
+          # Also show the raw trident_result if you want to copy it
+          st.markdown("**Full trident result (summary):**")
+          try:
+            # avoid huge dumps; show key summary fields
+            summary = {
+              "risk_score": tr.get("risk_score"),
+              "risk_band": tr.get("risk_band"),
+              "recommended_action": tr.get("recommended_action"),
+              "confidence": tr.get("confidence"),
+            }
+            st.json(summary)
+          except Exception:
+            st.write(tr)
+      except Exception:
+        # If Streamlit JSON rendering fails for any reason, fallback to a simple divider
+        st.write("(failed to render details)")
+
       st.markdown("---")
 
 
