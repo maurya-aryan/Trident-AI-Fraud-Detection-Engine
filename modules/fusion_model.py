@@ -12,12 +12,13 @@ logger = logging.getLogger(__name__)
 
 # Default weights for weighted-average fallback
 WEIGHTS = {
-    "credential_score": 0.30,
-    "ai_text_score": 0.20,
-    "malware_score": 0.25,
-    "email_phishing_score": 0.15,
-    "url_score": 0.07,
-    "injection_score": 0.03,
+    # Quick fallback: put stronger emphasis on email_phishing for immediate improvements
+    "credential_score": 0.05,
+    "ai_text_score": 0.03,
+    "malware_score": 0.10,
+    "email_phishing_score": 0.60,
+    "url_score": 0.20,
+    "injection_score": 0.02,
 }
 
 SCORE_KEYS = list(WEIGHTS.keys())
@@ -32,10 +33,14 @@ RISK_BANDS = [
 
 
 def _classify(score: float):
-    for lo, hi, band, action in RISK_BANDS:
-        if lo <= score <= hi:
-            return band, action
-    return "LOW", "VERIFY"
+    if score >= 75.0:
+        return "CRITICAL", "BLOCK"
+    elif score >= 50.0:
+        return "HIGH", "ESCALATE"
+    elif score >= 20.0:
+        return "MEDIUM", "WARN"
+    else:
+        return "LOW", "VERIFY"
 
 
 class FusionModel:
@@ -44,7 +49,29 @@ class FusionModel:
     def __init__(self):
         self.model = None
         self._trained = False
-        self._train_synthetic()
+        # Try to load a saved fusion model first
+        try:
+            import xgboost as xgb
+            from pathlib import Path
+
+            mp = Path("data/models/fusion_v2.json")
+            if mp.exists():
+                # Try to load as regressor or classifier
+                m = xgb.XGBModel()
+                try:
+                    m.load_model(str(mp))
+                    self.model = m
+                    self._trained = True
+                    logger.info(f"Loaded fusion model from {mp}")
+                except Exception:
+                    # fallback to synthetic training if loading fails
+                    logger.warning(f"Failed to load fusion model from {mp}, will train on synthetic data if needed.")
+        except Exception:
+            pass
+
+        # If no saved model available, fall back to synthetic training
+        if not self._trained:
+            self._train_synthetic()
 
     def _train_synthetic(self) -> None:
         try:
@@ -147,7 +174,12 @@ class FusionModel:
 
         if self._trained and self.model is not None:
             try:
-                predicted = float(self.model.predict(feature_vec.reshape(1, -1))[0])
+                # XGBoost saved model could be a regressor or classifier. Handle both.
+                if hasattr(self.model, 'predict_proba'):
+                    proba = float(self.model.predict_proba(feature_vec.reshape(1, -1))[0][1])
+                    predicted = proba * 100.0
+                else:
+                    predicted = float(self.model.predict(feature_vec.reshape(1, -1))[0])
                 # Blend model prediction with weighted average (70/30)
                 unified_score = 0.7 * predicted + 0.3 * weighted_avg
             except Exception as exc:

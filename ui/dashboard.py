@@ -358,74 +358,57 @@ def fetch_alerts(limit: int = 30):
     except Exception:
         return []
 
-# Header row
-_ac1, _ac2, _ac3 = st.columns([2, 2, 1])
-with _ac1:
-    st.markdown("### 📬 Processed Emails — Live Feed")
-with _ac2:
-    _filter_band = st.selectbox(
-        "Filter by risk", ["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW"],
-        label_visibility="collapsed"
-    )
-with _ac3:
-    if st.button("⟳ Refresh"):
-        st.rerun()
+latest_alerts = fetch_alerts(8)
+if latest_alerts:
+  with st.expander(f"Live alerts ({len(latest_alerts)})", expanded=False):
+    for entry in latest_alerts:
+      rec = entry.get("alert", {})
+      ts = entry.get("received_at", "")
+      subj = rec.get("subject") or "(no subject)"
+      sender = rec.get("sender") or "(unknown)"
+      band = rec.get("risk_band") or ""
+      score = rec.get("risk_score") or 0
+      # Summary line
+      st.markdown(f"**{band}** · {score:.0f}/100 — **{subj}**  ")
+      st.markdown(f"*From:* {sender} · *At:* {ts}")
 
-latest_alerts = fetch_alerts(30)
-# Apply filter
-_shown = [e for e in latest_alerts
-          if _filter_band == "ALL" or (e.get("alert", {}).get("risk_band") == _filter_band)]
+      # Expandable debug/details section (module scores + details)
+      try:
+        with st.expander("Show details", expanded=False):
+          tr = rec.get("trident_result", {})
+          # module_scores is the most useful quick-debug info
+          ms = tr.get("module_scores") if isinstance(tr, dict) else None
+          md = tr.get("module_details") if isinstance(tr, dict) else None
+          if ms:
+            st.markdown("**Module scores (normalised 0-100):**")
+            try:
+              st.json(ms)
+            except Exception:
+              st.write(ms)
+          if md:
+            st.markdown("**Module details (raw):**")
+            try:
+              st.json(md)
+            except Exception:
+              st.write(md)
+          # Also show the raw trident_result if you want to copy it
+          st.markdown("**Full trident result (summary):**")
+          try:
+            # avoid huge dumps; show key summary fields
+            summary = {
+              "risk_score": tr.get("risk_score"),
+              "risk_band": tr.get("risk_band"),
+              "recommended_action": tr.get("recommended_action"),
+              "confidence": tr.get("confidence"),
+            }
+            st.json(summary)
+          except Exception:
+            st.write(tr)
+      except Exception:
+        # If Streamlit JSON rendering fails for any reason, fallback to a simple divider
+        st.write("(failed to render details)")
 
-if not _shown:
-    st.info("No emails processed yet — start the IMAP poller to see live results.")
-else:
-    # Summary badge row
-    from collections import Counter
-    _counts = Counter(e.get("alert", {}).get("risk_band", "?") for e in latest_alerts)
-    _badge_html = " &nbsp; ".join(
-        f'<span style="background:{_BAND_COLOR.get(b,"#888")};color:#000;'
-        f'font-weight:700;padding:3px 10px;border-radius:20px;font-size:0.78rem">'
-        f'{_BAND_ICON.get(b,"")} {b} {n}</span>'
-        for b, n in [("CRITICAL", _counts["CRITICAL"]), ("HIGH", _counts["HIGH"]),
-                     ("MEDIUM", _counts["MEDIUM"]), ("LOW", _counts["LOW"])] if n
-    )
-    st.markdown(_badge_html, unsafe_allow_html=True)
-    st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
-
-    for entry in _shown:
-        rec   = entry.get("alert", {})
-        ts    = entry.get("received_at", "")[:19].replace("T", " ")
-        subj  = rec.get("subject") or "(no subject)"
-        sender= rec.get("sender") or "(unknown)"
-        band  = rec.get("risk_band") or "?"
-        score = rec.get("risk_score") or 0
-        snippet = rec.get("snippet", "")[:180]
-        action  = (rec.get("trident_result") or {}).get("recommended_action", "")
-        top3    = (rec.get("trident_result") or {}).get("top_factors", [])
-        col   = _BAND_COLOR.get(band, "#888")
-        bg    = _BAND_BG.get(band, "rgba(255,255,255,0.04)")
-        icon  = _BAND_ICON.get(band, "📧")
-
-        st.markdown(f"""
-<div style="background:{bg};border:1px solid {col}44;border-left:4px solid {col};
-     border-radius:10px;padding:14px 18px;margin-bottom:10px">
-  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
-    <div style="font-weight:700;font-size:0.97rem;color:#e2e8f0">{icon} {subj}</div>
-    <div>
-      <span style="background:{col};color:#000;font-weight:800;padding:2px 10px;
-            border-radius:12px;font-size:0.8rem">{band}</span>
-      <span style="background:rgba(255,255,255,0.08);color:#e2e8f0;padding:2px 10px;
-            border-radius:12px;font-size:0.8rem;margin-left:6px">⚡ {score:.1f}/100</span>
-      {"<span style='background:rgba(255,255,255,0.08);color:#94a3b8;padding:2px 10px;border-radius:12px;font-size:0.8rem;margin-left:6px'>" + action + "</span>" if action else ""}
-    </div>
-  </div>
-  <div style="color:#64748b;font-size:0.82rem;margin-top:5px">
-    📨 {sender} &nbsp;·&nbsp; 🕐 {ts}
-  </div>
-  {"<div style='color:#94a3b8;font-size:0.83rem;margin-top:6px;font-style:italic'>" + snippet + "…</div>" if snippet else ""}
-  {"<div style='margin-top:7px;font-size:0.8rem;color:#64748b'>🔍 " + " &nbsp;|&nbsp; ".join(top3) + "</div>" if top3 else ""}
-</div>
-""", unsafe_allow_html=True)
+      st.markdown("---")
 
 
 # ══════════════════════════════════════════════════════════════════════════════

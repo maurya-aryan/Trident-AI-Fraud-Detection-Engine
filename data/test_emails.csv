@@ -1,0 +1,1319 @@
+id,text,label,source
+phish_37,"Lee,
+
+Your account will be suspended unless you confirm your identity at https://payment-confirm.org/login?uid=5861. Act immediately.",1,phish_corpus
+legit_40,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_199,Urgent: Confirm your login by visiting https://update-info.co/login?uid=4531 to avoid account lockout.,1,phish_corpus
+legit_187,"Happy birthday, Alex! Hope you have a great day.
+
+Cheers, Bob",0,enron_sample
+phish_11,"Hello,
+
+There was a problem with your recent payment. Click https://verify-payments.us/login?uid=5386 to review and avoid service interruption.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_147,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_182,Urgent: Confirm your login by visiting https://verify-payments.us/login?uid=2768 to avoid account lockout.,1,phish_corpus
+phish_33,"Hello,
+
+There was a problem with your recent payment. Click https://secure-login.biz/login?uid=5092 to review and avoid service interruption.",1,phish_corpus
+phish_112,"Urgent: Confirm your login by visiting https://secure-verify.net/login?uid=1878 to avoid account lockout.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_20,"Happy birthday, Jordan! Hope you have a great day.
+
+Cheers, Alice",0,enron_sample
+legit_197,"Happy birthday, Sam! Hope you have a great day.
+
+Cheers, Carol",0,enron_sample
+phish_179,Urgent: Confirm your login by visiting https://secure-verify.net/login?uid=2041 to avoid account lockout.,1,phish_corpus
+legit_57,"Happy birthday, Sam! Hope you have a great day.
+
+Cheers, Bob",0,enron_sample
+phish_151,"Security alert for Pat: Unusual sign-in attempt. Verify at https://payment-confirm.org/login?uid=9153 or we will restrict access.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_43,Urgent: Confirm your login by visiting https://accountsecure.xyz/login?uid=2188 to avoid account lockout.,1,phish_corpus
+legit_102,"Hi Morgan,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Bob",0,enron_sample
+phish_61,"Dear Chris,
+
+We detected suspicious activity on your account. Please verify your information here: https://secure-verify.net/login?uid=8119
+
+Regards, Acme Corp",1,phish_corpus
+legit_142,"Happy birthday, Lee! Hope you have a great day.
+
+Cheers, Bob",0,enron_sample
+phish_159,"Hello,
+
+There was a problem with your recent payment. Click https://secure-login.biz/login?uid=1546 to review and avoid service interruption.",1,phish_corpus
+phish_105,"Hello,
+
+There was a problem with your recent payment. Click https://secure-login.biz/login?uid=5438 to review and avoid service interruption.",1,phish_corpus
+phish_195,"Dear Pat,
+
+We detected suspicious activity on your account. Please verify your information here: https://account-check.io/login?uid=1502
+
+Regards, SecureBank",1,phish_corpus
+legit_124,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_197,"Hello,
+
+There was a problem with your recent payment. Click https://secure-verify.net/login?uid=1861 to review and avoid service interruption.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_73,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+legit_58,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+legit_59,"Happy birthday, Taylor! Hope you have a great day.
+
+Cheers, Bob",0,enron_sample
+legit_134,"Hi Taylor,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Dev Team",0,enron_sample
+legit_83,"Dear Jordan,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Bob",0,enron_sample
+phish_180,Security alert for Sam: Unusual sign-in attempt. Verify at https://secure-verify.net/login?uid=8405 or we will restrict access.,1,phish_corpus
+legit_21,"Dear Morgan,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Carol",0,enron_sample
+phish_184,Security alert for Chris: Unusual sign-in attempt. Verify at https://accountsecure.xyz/login?uid=7240 or we will restrict access.,1,phish_corpus
+phish_158,"Sam,
+
+Your account will be suspended unless you confirm your identity at https://payment-confirm.org/login?uid=5106. Act immediately.",1,phish_corpus
+legit_64,"Dear Morgan,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Dev Team",0,enron_sample
+phish_14,Security alert for Taylor: Unusual sign-in attempt. Verify at https://secure-login.biz/login?uid=2489 or we will restrict access.,1,phish_corpus
+phish_174,"Dear Alex,
+
+We detected suspicious activity on your account. Please verify your information here: https://accountsecure.xyz/login?uid=4990
+
+Regards, PayService",1,phish_corpus
+legit_123,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+legit_51,"Happy birthday, Pat! Hope you have a great day.
+
+Cheers, Carol",0,enron_sample
+legit_18,"Dear Pat,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Carol",0,enron_sample
+legit_16,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+phish_73,"Dear Lee,
+
+We detected suspicious activity on your account. Please verify your information here: https://payment-confirm.org/login?uid=2988
+
+Regards, ClientServices
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_109,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_91,"Security alert for Taylor: Unusual sign-in attempt. Verify at https://secure-verify.net/login?uid=3683 or we will restrict access.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_151,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+phish_6,"Dear Pat,
+
+We detected suspicious activity on your account. Please verify your information here: https://update-info.co/login?uid=6925
+
+Regards, PayService",1,phish_corpus
+phish_93,"Dear Morgan,
+
+We detected suspicious activity on your account. Please verify your information here: https://update-info.co/login?uid=2983
+
+Regards, SecureBank",1,phish_corpus
+legit_184,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+legit_110,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+legit_150,"Happy birthday, Jordan! Hope you have a great day.
+
+Cheers, Bob",0,enron_sample
+phish_132,Urgent: Confirm your login by visiting https://secure-login.biz/login?uid=2989 to avoid account lockout.,1,phish_corpus
+legit_81,"Hi Jordan,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Carol",0,enron_sample
+phish_144,Urgent: Confirm your login by visiting https://account-check.io/login?uid=2225 to avoid account lockout.,1,phish_corpus
+legit_92,"Happy birthday, Jordan! Hope you have a great day.
+
+Cheers, Alice",0,enron_sample
+phish_108,"Sam,
+
+Your account will be suspended unless you confirm your identity at https://update-info.co/login?uid=1231. Act immediately.",1,phish_corpus
+phish_96,"Lee,
+
+Your account will be suspended unless you confirm your identity at https://verify-payments.us/login?uid=3885. Act immediately.",1,phish_corpus
+phish_64,Security alert for Sam: Unusual sign-in attempt. Verify at https://accountsecure.xyz/login?uid=3041 or we will restrict access.,1,phish_corpus
+phish_46,Security alert for Chris: Unusual sign-in attempt. Verify at https://badbank-login.com/login?uid=5905 or we will restrict access.,1,phish_corpus
+legit_137,"Dear Chris,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Bob",0,enron_sample
+phish_12,"Sam,
+
+Your account will be suspended unless you confirm your identity at https://secure-login.biz/login?uid=7482. Act immediately.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_198,"Dear Alex,
+
+We detected suspicious activity on your account. Please verify your information here: https://update-info.co/login?uid=8259
+
+Regards, ClientServices",1,phish_corpus
+phish_127,"Hello,
+
+There was a problem with your recent payment. Click https://verify-payments.us/login?uid=9117 to review and avoid service interruption.",1,phish_corpus
+legit_77,"Hi Sam,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Carol",0,enron_sample
+legit_103,"Dear Alex,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Carol",0,enron_sample
+legit_179,"Happy birthday, Pat! Hope you have a great day.
+
+Cheers, Dev Team",0,enron_sample
+legit_60,"Hi Lee,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Dev Team",0,enron_sample
+phish_81,Security alert for Alex: Unusual sign-in attempt. Verify at https://verify-payments.us/login?uid=8814 or we will restrict access.,1,phish_corpus
+phish_101,"Security alert for Chris: Unusual sign-in attempt. Verify at https://badbank-login.com/login?uid=9464 or we will restrict access.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_6,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_136,Urgent: Confirm your login by visiting https://account-check.io/login?uid=7284 to avoid account lockout.,1,phish_corpus
+phish_111,"Dear Taylor,
+
+We detected suspicious activity on your account. Please verify your information here: https://update-info.co/login?uid=8827
+
+Regards, SecureBank",1,phish_corpus
+phish_107,"Hello,
+
+There was a problem with your recent payment. Click https://update-info.co/login?uid=2647 to review and avoid service interruption.",1,phish_corpus
+phish_141,Urgent: Confirm your login by visiting https://badbank-login.com/login?uid=6213 to avoid account lockout.,1,phish_corpus
+phish_123,"Urgent: Confirm your login by visiting https://accountsecure.xyz/login?uid=5102 to avoid account lockout.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_67,Urgent: Confirm your login by visiting https://accountsecure.xyz/login?uid=8618 to avoid account lockout.,1,phish_corpus
+phish_110,Security alert for Alex: Unusual sign-in attempt. Verify at https://update-info.co/login?uid=8690 or we will restrict access.,1,phish_corpus
+phish_186,Urgent: Confirm your login by visiting https://accountsecure.xyz/login?uid=8430 to avoid account lockout.,1,phish_corpus
+legit_0,"Dear Jordan,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Dev Team",0,enron_sample
+legit_120,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_100,"Hello,
+
+There was a problem with your recent payment. Click https://update-info.co/login?uid=6576 to review and avoid service interruption.",1,phish_corpus
+phish_99,"Hello,
+
+There was a problem with your recent payment. Click https://badbank-login.com/login?uid=9098 to review and avoid service interruption.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_159,"Happy birthday, Alex! Hope you have a great day.
+
+Cheers, Carol",0,enron_sample
+phish_10,"Hello,
+
+There was a problem with your recent payment. Click https://payment-confirm.org/login?uid=6313 to review and avoid service interruption.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_172,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+phish_185,"Dear Pat,
+
+We detected suspicious activity on your account. Please verify your information here: https://secure-verify.net/login?uid=4522
+
+Regards, ClientServices",1,phish_corpus
+phish_57,Urgent: Confirm your login by visiting https://payment-confirm.org/login?uid=4269 to avoid account lockout.,1,phish_corpus
+phish_48,"Hello,
+
+There was a problem with your recent payment. Click https://payment-confirm.org/login?uid=5325 to review and avoid service interruption.",1,phish_corpus
+phish_196,"Urgent: Confirm your login by visiting https://verify-payments.us/login?uid=8432 to avoid account lockout.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_121,Security alert for Chris: Unusual sign-in attempt. Verify at https://update-info.co/login?uid=8195 or we will restrict access.,1,phish_corpus
+legit_136,"Dear Sam,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Alice",0,enron_sample
+legit_9,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_17,"Hello,
+
+There was a problem with your recent payment. Click https://secure-verify.net/login?uid=5808 to review and avoid service interruption.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_168,"Hello,
+
+There was a problem with your recent payment. Click https://secure-login.biz/login?uid=2902 to review and avoid service interruption.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_130,Urgent: Confirm your login by visiting https://badbank-login.com/login?uid=4073 to avoid account lockout.,1,phish_corpus
+phish_36,Urgent: Confirm your login by visiting https://update-info.co/login?uid=8454 to avoid account lockout.,1,phish_corpus
+phish_4,"Hello,
+
+There was a problem with your recent payment. Click https://secure-verify.net/login?uid=2519 to review and avoid service interruption.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_183,"Happy birthday, Chris! Hope you have a great day.
+
+Cheers, Alice",0,enron_sample
+phish_189,"Hello,
+
+There was a problem with your recent payment. Click https://account-check.io/login?uid=1982 to review and avoid service interruption.",1,phish_corpus
+legit_63,"Dear Morgan,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Dev Team",0,enron_sample
+legit_28,"Hi Lee,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Dev Team",0,enron_sample
+legit_195,"Dear Taylor,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Dev Team",0,enron_sample
+legit_61,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+legit_174,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+phish_54,Security alert for Pat: Unusual sign-in attempt. Verify at https://account-check.io/login?uid=4878 or we will restrict access.,1,phish_corpus
+phish_5,Security alert for Sam: Unusual sign-in attempt. Verify at https://update-info.co/login?uid=1711 or we will restrict access.,1,phish_corpus
+legit_127,"Happy birthday, Taylor! Hope you have a great day.
+
+Cheers, Carol",0,enron_sample
+legit_49,"Happy birthday, Chris! Hope you have a great day.
+
+Cheers, Dev Team",0,enron_sample
+legit_182,"Happy birthday, Lee! Hope you have a great day.
+
+Cheers, Dev Team",0,enron_sample
+legit_84,"Hi Chris,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Alice",0,enron_sample
+phish_0,"Dear Jordan,
+
+We detected suspicious activity on your account. Please verify your information here: https://update-info.co/login?uid=5012
+
+Regards, PayService
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_186,"Hi Sam,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Dev Team",0,enron_sample
+phish_32,"Jordan,
+
+Your account will be suspended unless you confirm your identity at https://payment-confirm.org/login?uid=4116. Act immediately.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_50,"Hello,
+
+There was a problem with your recent payment. Click https://account-check.io/login?uid=8239 to review and avoid service interruption.",1,phish_corpus
+legit_131,"Dear Jordan,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Carol",0,enron_sample
+phish_143,"Dear Sam,
+
+We detected suspicious activity on your account. Please verify your information here: https://secure-login.biz/login?uid=2633
+
+Regards, ClientServices
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_116,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+legit_34,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+legit_155,"Dear Taylor,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Alice",0,enron_sample
+phish_59,"Hello,
+
+There was a problem with your recent payment. Click https://accountsecure.xyz/login?uid=9346 to review and avoid service interruption.",1,phish_corpus
+phish_71,Urgent: Confirm your login by visiting https://verify-payments.us/login?uid=4185 to avoid account lockout.,1,phish_corpus
+legit_36,"Happy birthday, Sam! Hope you have a great day.
+
+Cheers, Dev Team",0,enron_sample
+legit_54,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+legit_149,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_53,"Hello,
+
+There was a problem with your recent payment. Click https://payment-confirm.org/login?uid=5088 to review and avoid service interruption.",1,phish_corpus
+legit_19,"Dear Morgan,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Bob",0,enron_sample
+legit_163,"Dear Pat,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Dev Team",0,enron_sample
+phish_58,"Morgan,
+
+Your account will be suspended unless you confirm your identity at https://badbank-login.com/login?uid=4164. Act immediately.",1,phish_corpus
+phish_7,"Alex,
+
+Your account will be suspended unless you confirm your identity at https://update-info.co/login?uid=2307. Act immediately.",1,phish_corpus
+legit_108,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+legit_132,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+phish_23,Security alert for Lee: Unusual sign-in attempt. Verify at https://account-check.io/login?uid=5342 or we will restrict access.,1,phish_corpus
+phish_125,"Hello,
+
+There was a problem with your recent payment. Click https://account-check.io/login?uid=8141 to review and avoid service interruption.",1,phish_corpus
+phish_52,Urgent: Confirm your login by visiting https://account-check.io/login?uid=1685 to avoid account lockout.,1,phish_corpus
+phish_29,"Lee,
+
+Your account will be suspended unless you confirm your identity at https://secure-login.biz/login?uid=7669. Act immediately.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_113,"Dear Chris,
+
+We detected suspicious activity on your account. Please verify your information here: https://payment-confirm.org/login?uid=2940
+
+Regards, ClientServices",1,phish_corpus
+phish_133,"Morgan,
+
+Your account will be suspended unless you confirm your identity at https://update-info.co/login?uid=1224. Act immediately.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_1,"Hi Chris,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Bob",0,enron_sample
+phish_42,"Sam,
+
+Your account will be suspended unless you confirm your identity at https://update-info.co/login?uid=7484. Act immediately.",1,phish_corpus
+phish_38,"Hello,
+
+There was a problem with your recent payment. Click https://badbank-login.com/login?uid=1821 to review and avoid service interruption.",1,phish_corpus
+phish_150,"Security alert for Pat: Unusual sign-in attempt. Verify at https://account-check.io/login?uid=3785 or we will restrict access.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_76,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+legit_30,"Dear Alex,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Alice",0,enron_sample
+legit_133,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+legit_157,"Happy birthday, Taylor! Hope you have a great day.
+
+Cheers, Carol",0,enron_sample
+legit_62,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+legit_114,"Dear Chris,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Alice",0,enron_sample
+legit_130,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+legit_22,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+legit_180,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+phish_20,"Security alert for Alex: Unusual sign-in attempt. Verify at https://accountsecure.xyz/login?uid=9005 or we will restrict access.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_138,"Dear Taylor,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Bob",0,enron_sample
+legit_198,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_137,"Dear Taylor,
+
+We detected suspicious activity on your account. Please verify your information here: https://update-info.co/login?uid=7798
+
+Regards, Acme Corp",1,phish_corpus
+phish_120,"Hello,
+
+There was a problem with your recent payment. Click https://account-check.io/login?uid=2169 to review and avoid service interruption.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_128,"Dear Pat,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Carol",0,enron_sample
+legit_118,"Hi Lee,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Carol",0,enron_sample
+legit_55,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+phish_155,"Dear Lee,
+
+We detected suspicious activity on your account. Please verify your information here: https://payment-confirm.org/login?uid=7248
+
+Regards, Acme Corp",1,phish_corpus
+legit_38,"Dear Jordan,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Alice",0,enron_sample
+phish_39,"Dear Taylor,
+
+We detected suspicious activity on your account. Please verify your information here: https://secure-verify.net/login?uid=4044
+
+Regards, SecureBank",1,phish_corpus
+legit_107,"Dear Sam,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Alice",0,enron_sample
+legit_32,"Hi Alex,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Carol",0,enron_sample
+phish_161,Security alert for Sam: Unusual sign-in attempt. Verify at https://update-info.co/login?uid=3695 or we will restrict access.,1,phish_corpus
+legit_160,"Happy birthday, Morgan! Hope you have a great day.
+
+Cheers, Dev Team",0,enron_sample
+legit_188,"Happy birthday, Sam! Hope you have a great day.
+
+Cheers, Carol",0,enron_sample
+phish_94,"Hello,
+
+There was a problem with your recent payment. Click https://secure-verify.net/login?uid=9289 to review and avoid service interruption.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_12,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+legit_5,"Dear Chris,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Alice",0,enron_sample
+phish_173,"Chris,
+
+Your account will be suspended unless you confirm your identity at https://secure-verify.net/login?uid=8450. Act immediately.",1,phish_corpus
+phish_79,"Dear Morgan,
+
+We detected suspicious activity on your account. Please verify your information here: https://verify-payments.us/login?uid=7678
+
+Regards, Acme Corp",1,phish_corpus
+phish_128,Security alert for Pat: Unusual sign-in attempt. Verify at https://badbank-login.com/login?uid=8451 or we will restrict access.,1,phish_corpus
+legit_4,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+legit_100,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+phish_78,"Jordan,
+
+Your account will be suspended unless you confirm your identity at https://account-check.io/login?uid=4788. Act immediately.",1,phish_corpus
+legit_29,"Dear Lee,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Carol",0,enron_sample
+legit_145,"Happy birthday, Pat! Hope you have a great day.
+
+Cheers, Alice",0,enron_sample
+phish_170,Urgent: Confirm your login by visiting https://secure-verify.net/login?uid=9017 to avoid account lockout.,1,phish_corpus
+phish_15,"Taylor,
+
+Your account will be suspended unless you confirm your identity at https://verify-payments.us/login?uid=2040. Act immediately.",1,phish_corpus
+legit_15,"Hi Sam,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Dev Team",0,enron_sample
+legit_99,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_92,"Hello,
+
+There was a problem with your recent payment. Click https://verify-payments.us/login?uid=7498 to review and avoid service interruption.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_167,"Hello,
+
+There was a problem with your recent payment. Click https://verify-payments.us/login?uid=2911 to review and avoid service interruption.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_190,"Hello,
+
+There was a problem with your recent payment. Click https://verify-payments.us/login?uid=1842 to review and avoid service interruption.",1,phish_corpus
+legit_52,"Dear Alex,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Carol",0,enron_sample
+legit_66,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+phish_149,"Hello,
+
+There was a problem with your recent payment. Click https://accountsecure.xyz/login?uid=7141 to review and avoid service interruption.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_154,"Happy birthday, Morgan! Hope you have a great day.
+
+Cheers, Carol",0,enron_sample
+legit_48,"Happy birthday, Taylor! Hope you have a great day.
+
+Cheers, Alice",0,enron_sample
+phish_68,Security alert for Morgan: Unusual sign-in attempt. Verify at https://secure-login.biz/login?uid=3780 or we will restrict access.,1,phish_corpus
+phish_114,Security alert for Morgan: Unusual sign-in attempt. Verify at https://verify-payments.us/login?uid=8381 or we will restrict access.,1,phish_corpus
+phish_60,"Dear Sam,
+
+We detected suspicious activity on your account. Please verify your information here: https://secure-verify.net/login?uid=5279
+
+Regards, PayService",1,phish_corpus
+legit_126,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_66,"Pat,
+
+Your account will be suspended unless you confirm your identity at https://update-info.co/login?uid=7653. Act immediately.",1,phish_corpus
+phish_1,"Security alert for Jordan: Unusual sign-in attempt. Verify at https://secure-verify.net/login?uid=7912 or we will restrict access.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_63,"Dear Pat,
+
+We detected suspicious activity on your account. Please verify your information here: https://payment-confirm.org/login?uid=6967
+
+Regards, ClientServices
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_82,Urgent: Confirm your login by visiting https://verify-payments.us/login?uid=9818 to avoid account lockout.,1,phish_corpus
+legit_91,"Hi Taylor,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Carol",0,enron_sample
+phish_35,"Urgent: Confirm your login by visiting https://payment-confirm.org/login?uid=7570 to avoid account lockout.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_31,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_24,"Hello,
+
+There was a problem with your recent payment. Click https://verify-payments.us/login?uid=7118 to review and avoid service interruption.",1,phish_corpus
+phish_171,"Dear Chris,
+
+We detected suspicious activity on your account. Please verify your information here: https://accountsecure.xyz/login?uid=4559
+
+Regards, ClientServices",1,phish_corpus
+legit_141,"Happy birthday, Sam! Hope you have a great day.
+
+Cheers, Carol",0,enron_sample
+phish_22,"Dear Jordan,
+
+We detected suspicious activity on your account. Please verify your information here: https://secure-login.biz/login?uid=2133
+
+Regards, PayService
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_83,Urgent: Confirm your login by visiting https://secure-login.biz/login?uid=1475 to avoid account lockout.,1,phish_corpus
+legit_97,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+legit_178,"Hi Lee,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Alice",0,enron_sample
+legit_94,"Dear Pat,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Carol",0,enron_sample
+phish_163,"Taylor,
+
+Your account will be suspended unless you confirm your identity at https://verify-payments.us/login?uid=6992. Act immediately.",1,phish_corpus
+phish_156,"Dear Chris,
+
+We detected suspicious activity on your account. Please verify your information here: https://verify-payments.us/login?uid=5497
+
+Regards, SecureBank",1,phish_corpus
+phish_44,"Dear Jordan,
+
+We detected suspicious activity on your account. Please verify your information here: https://payment-confirm.org/login?uid=9288
+
+Regards, Acme Corp
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_33,"Hi Chris,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Alice",0,enron_sample
+phish_193,"Security alert for Pat: Unusual sign-in attempt. Verify at https://badbank-login.com/login?uid=5381 or we will restrict access.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_172,"Hello,
+
+There was a problem with your recent payment. Click https://secure-verify.net/login?uid=7018 to review and avoid service interruption.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_70,"Dear Taylor,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Dev Team",0,enron_sample
+legit_166,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+legit_106,"Dear Chris,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Alice",0,enron_sample
+phish_86,Urgent: Confirm your login by visiting https://accountsecure.xyz/login?uid=4467 to avoid account lockout.,1,phish_corpus
+legit_194,"Hi Alex,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Alice",0,enron_sample
+phish_3,"Dear Chris,
+
+We detected suspicious activity on your account. Please verify your information here: https://account-check.io/login?uid=7924
+
+Regards, Acme Corp",1,phish_corpus
+phish_47,"Hello,
+
+There was a problem with your recent payment. Click https://secure-verify.net/login?uid=2753 to review and avoid service interruption.",1,phish_corpus
+phish_183,"Dear Lee,
+
+We detected suspicious activity on your account. Please verify your information here: https://secure-verify.net/login?uid=6277
+
+Regards, PayService
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_65,"Hello,
+
+There was a problem with your recent payment. Click https://verify-payments.us/login?uid=5844 to review and avoid service interruption.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_165,Security alert for Chris: Unusual sign-in attempt. Verify at https://verify-payments.us/login?uid=7086 or we will restrict access.,1,phish_corpus
+phish_117,"Dear Taylor,
+
+We detected suspicious activity on your account. Please verify your information here: https://verify-payments.us/login?uid=8381
+
+Regards, ClientServices",1,phish_corpus
+phish_187,"Hello,
+
+There was a problem with your recent payment. Click https://verify-payments.us/login?uid=6120 to review and avoid service interruption.",1,phish_corpus
+phish_41,Security alert for Pat: Unusual sign-in attempt. Verify at https://accountsecure.xyz/login?uid=5272 or we will restrict access.,1,phish_corpus
+phish_84,"Pat,
+
+Your account will be suspended unless you confirm your identity at https://secure-login.biz/login?uid=3091. Act immediately.",1,phish_corpus
+phish_28,"Hello,
+
+There was a problem with your recent payment. Click https://secure-login.biz/login?uid=4510 to review and avoid service interruption.",1,phish_corpus
+legit_7,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+phish_49,"Dear Alex,
+
+We detected suspicious activity on your account. Please verify your information here: https://verify-payments.us/login?uid=5533
+
+Regards, SecureBank
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_69,"Dear Sam,
+
+We detected suspicious activity on your account. Please verify your information here: https://payment-confirm.org/login?uid=6085
+
+Regards, PayService",1,phish_corpus
+legit_82,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+phish_129,"Dear Sam,
+
+We detected suspicious activity on your account. Please verify your information here: https://verify-payments.us/login?uid=9431
+
+Regards, SecureBank",1,phish_corpus
+legit_17,"Happy birthday, Pat! Hope you have a great day.
+
+Cheers, Alice",0,enron_sample
+phish_34,"Dear Jordan,
+
+We detected suspicious activity on your account. Please verify your information here: https://badbank-login.com/login?uid=2528
+
+Regards, PayService
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_27,"Dear Sam,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Bob",0,enron_sample
+legit_125,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_134,Urgent: Confirm your login by visiting https://secure-verify.net/login?uid=3522 to avoid account lockout.,1,phish_corpus
+legit_90,"Happy birthday, Morgan! Hope you have a great day.
+
+Cheers, Dev Team",0,enron_sample
+legit_67,"Dear Taylor,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Alice",0,enron_sample
+legit_177,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_72,"Morgan,
+
+Your account will be suspended unless you confirm your identity at https://badbank-login.com/login?uid=2746. Act immediately.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_85,"Dear Alex,
+
+We detected suspicious activity on your account. Please verify your information here: https://verify-payments.us/login?uid=3223
+
+Regards, ClientServices
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_168,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_27,"Alex,
+
+Your account will be suspended unless you confirm your identity at https://secure-verify.net/login?uid=1514. Act immediately.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_154,"Hello,
+
+There was a problem with your recent payment. Click https://secure-login.biz/login?uid=5949 to review and avoid service interruption.",1,phish_corpus
+phish_145,"Hello,
+
+There was a problem with your recent payment. Click https://verify-payments.us/login?uid=2315 to review and avoid service interruption.",1,phish_corpus
+phish_76,Security alert for Chris: Unusual sign-in attempt. Verify at https://secure-login.biz/login?uid=4919 or we will restrict access.,1,phish_corpus
+legit_74,"Happy birthday, Pat! Hope you have a great day.
+
+Cheers, Carol",0,enron_sample
+legit_161,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+legit_24,"Happy birthday, Taylor! Hope you have a great day.
+
+Cheers, Bob",0,enron_sample
+legit_104,"Happy birthday, Pat! Hope you have a great day.
+
+Cheers, Dev Team",0,enron_sample
+legit_37,"Hi Taylor,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Dev Team",0,enron_sample
+legit_23,"Dear Taylor,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Bob",0,enron_sample
+legit_46,"Hi Sam,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Bob",0,enron_sample
+phish_191,"Dear Sam,
+
+We detected suspicious activity on your account. Please verify your information here: https://payment-confirm.org/login?uid=3535
+
+Regards, ClientServices
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_39,"Hi Taylor,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Bob",0,enron_sample
+phish_95,Urgent: Confirm your login by visiting https://secure-verify.net/login?uid=8102 to avoid account lockout.,1,phish_corpus
+legit_53,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+legit_3,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+phish_18,"Hello,
+
+There was a problem with your recent payment. Click https://account-check.io/login?uid=9317 to review and avoid service interruption.",1,phish_corpus
+phish_90,Security alert for Jordan: Unusual sign-in attempt. Verify at https://payment-confirm.org/login?uid=8619 or we will restrict access.,1,phish_corpus
+legit_190,"Happy birthday, Chris! Hope you have a great day.
+
+Cheers, Alice",0,enron_sample
+phish_89,"Morgan,
+
+Your account will be suspended unless you confirm your identity at https://badbank-login.com/login?uid=3496. Act immediately.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_19,Security alert for Chris: Unusual sign-in attempt. Verify at https://payment-confirm.org/login?uid=3504 or we will restrict access.,1,phish_corpus
+phish_118,"Hello,
+
+There was a problem with your recent payment. Click https://update-info.co/login?uid=8438 to review and avoid service interruption.",1,phish_corpus
+phish_45,"Dear Sam,
+
+We detected suspicious activity on your account. Please verify your information here: https://payment-confirm.org/login?uid=7054
+
+Regards, Acme Corp
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_30,"Hello,
+
+There was a problem with your recent payment. Click https://verify-payments.us/login?uid=7735 to review and avoid service interruption.",1,phish_corpus
+phish_146,"Hello,
+
+There was a problem with your recent payment. Click https://secure-login.biz/login?uid=9864 to review and avoid service interruption.",1,phish_corpus
+phish_164,"Hello,
+
+There was a problem with your recent payment. Click https://secure-verify.net/login?uid=8451 to review and avoid service interruption.",1,phish_corpus
+legit_101,"Hi Lee,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Carol",0,enron_sample
+phish_102,Urgent: Confirm your login by visiting https://payment-confirm.org/login?uid=8800 to avoid account lockout.,1,phish_corpus
+legit_140,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+legit_196,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+legit_8,"Happy birthday, Morgan! Hope you have a great day.
+
+Cheers, Carol",0,enron_sample
+phish_80,"Dear Pat,
+
+We detected suspicious activity on your account. Please verify your information here: https://payment-confirm.org/login?uid=7883
+
+Regards, ClientServices",1,phish_corpus
+phish_2,"Morgan,
+
+Your account will be suspended unless you confirm your identity at https://badbank-login.com/login?uid=4257. Act immediately.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_89,"Happy birthday, Alex! Hope you have a great day.
+
+Cheers, Carol",0,enron_sample
+legit_80,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+legit_165,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+legit_193,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+legit_153,"Hi Chris,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Carol",0,enron_sample
+phish_51,"Dear Jordan,
+
+We detected suspicious activity on your account. Please verify your information here: https://account-check.io/login?uid=9938
+
+Regards, SecureBank",1,phish_corpus
+legit_175,"Happy birthday, Sam! Hope you have a great day.
+
+Cheers, Carol",0,enron_sample
+phish_119,Security alert for Chris: Unusual sign-in attempt. Verify at https://payment-confirm.org/login?uid=7965 or we will restrict access.,1,phish_corpus
+legit_121,"Hi Taylor,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Bob",0,enron_sample
+legit_71,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_25,"Dear Lee,
+
+We detected suspicious activity on your account. Please verify your information here: https://payment-confirm.org/login?uid=4681
+
+Regards, SecureBank",1,phish_corpus
+legit_164,"Hi Jordan,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Bob",0,enron_sample
+phish_122,Urgent: Confirm your login by visiting https://update-info.co/login?uid=9199 to avoid account lockout.,1,phish_corpus
+phish_55,Urgent: Confirm your login by visiting https://badbank-login.com/login?uid=3938 to avoid account lockout.,1,phish_corpus
+legit_146,"Dear Taylor,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Alice",0,enron_sample
+phish_139,Security alert for Lee: Unusual sign-in attempt. Verify at https://secure-login.biz/login?uid=6654 or we will restrict access.,1,phish_corpus
+legit_143,"Hi Jordan,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Carol",0,enron_sample
+phish_138,"Dear Chris,
+
+We detected suspicious activity on your account. Please verify your information here: https://update-info.co/login?uid=5891
+
+Regards, ClientServices",1,phish_corpus
+legit_75,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_103,"Dear Alex,
+
+We detected suspicious activity on your account. Please verify your information here: https://update-info.co/login?uid=4630
+
+Regards, ClientServices",1,phish_corpus
+phish_109,"Security alert for Alex: Unusual sign-in attempt. Verify at https://update-info.co/login?uid=3068 or we will restrict access.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_115,"Dear Jordan,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Carol",0,enron_sample
+phish_131,Urgent: Confirm your login by visiting https://badbank-login.com/login?uid=4335 to avoid account lockout.,1,phish_corpus
+legit_26,"Happy birthday, Lee! Hope you have a great day.
+
+Cheers, Dev Team",0,enron_sample
+phish_177,"Chris,
+
+Your account will be suspended unless you confirm your identity at https://secure-verify.net/login?uid=1422. Act immediately.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_40,Urgent: Confirm your login by visiting https://secure-verify.net/login?uid=5033 to avoid account lockout.,1,phish_corpus
+legit_111,"Happy birthday, Sam! Hope you have a great day.
+
+Cheers, Carol",0,enron_sample
+phish_21,"Hello,
+
+There was a problem with your recent payment. Click https://payment-confirm.org/login?uid=1949 to review and avoid service interruption.",1,phish_corpus
+phish_148,"Urgent: Confirm your login by visiting https://account-check.io/login?uid=5906 to avoid account lockout.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_74,Security alert for Lee: Unusual sign-in attempt. Verify at https://accountsecure.xyz/login?uid=8251 or we will restrict access.,1,phish_corpus
+phish_176,Security alert for Taylor: Unusual sign-in attempt. Verify at https://badbank-login.com/login?uid=5542 or we will restrict access.,1,phish_corpus
+legit_2,"Happy birthday, Pat! Hope you have a great day.
+
+Cheers, Alice",0,enron_sample
+legit_167,"Dear Taylor,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Carol",0,enron_sample
+legit_78,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+legit_199,"Happy birthday, Sam! Hope you have a great day.
+
+Cheers, Dev Team",0,enron_sample
+phish_62,Urgent: Confirm your login by visiting https://secure-verify.net/login?uid=7311 to avoid account lockout.,1,phish_corpus
+legit_119,"Dear Pat,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Alice",0,enron_sample
+phish_140,Urgent: Confirm your login by visiting https://accountsecure.xyz/login?uid=4090 to avoid account lockout.,1,phish_corpus
+legit_86,"Hi Jordan,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Dev Team",0,enron_sample
+phish_178,Security alert for Morgan: Unusual sign-in attempt. Verify at https://accountsecure.xyz/login?uid=1258 or we will restrict access.,1,phish_corpus
+legit_173,"Dear Alex,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Dev Team",0,enron_sample
+phish_162,"Hello,
+
+There was a problem with your recent payment. Click https://accountsecure.xyz/login?uid=2886 to review and avoid service interruption.",1,phish_corpus
+legit_50,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+legit_192,"Dear Sam,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Carol",0,enron_sample
+phish_147,"Hello,
+
+There was a problem with your recent payment. Click https://payment-confirm.org/login?uid=2480 to review and avoid service interruption.",1,phish_corpus
+legit_170,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+phish_115,"Hello,
+
+There was a problem with your recent payment. Click https://badbank-login.com/login?uid=2625 to review and avoid service interruption.",1,phish_corpus
+phish_152,Urgent: Confirm your login by visiting https://update-info.co/login?uid=1153 to avoid account lockout.,1,phish_corpus
+legit_85,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_142,"Urgent: Confirm your login by visiting https://account-check.io/login?uid=9115 to avoid account lockout.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_126,"Hello,
+
+There was a problem with your recent payment. Click https://verify-payments.us/login?uid=6460 to review and avoid service interruption.",1,phish_corpus
+phish_98,"Hello,
+
+There was a problem with your recent payment. Click https://secure-login.biz/login?uid=4995 to review and avoid service interruption.",1,phish_corpus
+legit_47,"Dear Sam,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Dev Team",0,enron_sample
+legit_112,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+legit_181,"Hi Alex,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Carol",0,enron_sample
+legit_129,"Hi Morgan,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Alice",0,enron_sample
+phish_181,"Security alert for Alex: Unusual sign-in attempt. Verify at https://update-info.co/login?uid=8504 or we will restrict access.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_79,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_175,"Dear Morgan,
+
+We detected suspicious activity on your account. Please verify your information here: https://payment-confirm.org/login?uid=4538
+
+Regards, PayService",1,phish_corpus
+legit_72,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+legit_35,"Happy birthday, Lee! Hope you have a great day.
+
+Cheers, Bob",0,enron_sample
+phish_88,"Hello,
+
+There was a problem with your recent payment. Click https://payment-confirm.org/login?uid=2124 to review and avoid service interruption.",1,phish_corpus
+legit_156,"Happy birthday, Taylor! Hope you have a great day.
+
+Cheers, Bob",0,enron_sample
+phish_192,"Hello,
+
+There was a problem with your recent payment. Click https://accountsecure.xyz/login?uid=2882 to review and avoid service interruption.",1,phish_corpus
+legit_69,"Dear Jordan,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Alice",0,enron_sample
+legit_44,"Hi Sam,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Dev Team",0,enron_sample
+legit_139,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+phish_166,"Dear Lee,
+
+We detected suspicious activity on your account. Please verify your information here: https://accountsecure.xyz/login?uid=4626
+
+Regards, SecureBank",1,phish_corpus
+legit_87,"Happy birthday, Alex! Hope you have a great day.
+
+Cheers, Bob",0,enron_sample
+phish_106,"Jordan,
+
+Your account will be suspended unless you confirm your identity at https://accountsecure.xyz/login?uid=2958. Act immediately.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_65,"Dear Lee,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Dev Team",0,enron_sample
+phish_70,"Dear Taylor,
+
+We detected suspicious activity on your account. Please verify your information here: https://badbank-login.com/login?uid=5011
+
+Regards, ClientServices",1,phish_corpus
+phish_31,"Dear Alex,
+
+We detected suspicious activity on your account. Please verify your information here: https://badbank-login.com/login?uid=7596
+
+Regards, Acme Corp",1,phish_corpus
+legit_41,"Dear Sam,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Carol",0,enron_sample
+legit_113,"Happy birthday, Pat! Hope you have a great day.
+
+Cheers, Bob",0,enron_sample
+legit_56,"Hi Chris,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Alice",0,enron_sample
+legit_10,"Hi Pat,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Dev Team",0,enron_sample
+phish_104,Security alert for Chris: Unusual sign-in attempt. Verify at https://accountsecure.xyz/login?uid=8753 or we will restrict access.,1,phish_corpus
+legit_11,"Dear Jordan,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Dev Team",0,enron_sample
+phish_77,"Chris,
+
+Your account will be suspended unless you confirm your identity at https://update-info.co/login?uid=6502. Act immediately.",1,phish_corpus
+legit_14,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+phish_160,"Hello,
+
+There was a problem with your recent payment. Click https://accountsecure.xyz/login?uid=7807 to review and avoid service interruption.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+legit_25,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+phish_9,"Hello,
+
+There was a problem with your recent payment. Click https://secure-verify.net/login?uid=3803 to review and avoid service interruption.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_97,Urgent: Confirm your login by visiting https://verify-payments.us/login?uid=5397 to avoid account lockout.,1,phish_corpus
+legit_191,"Hi Taylor,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Dev Team",0,enron_sample
+legit_158,"Hi Alex,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Alice",0,enron_sample
+legit_93,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_16,Security alert for Lee: Unusual sign-in attempt. Verify at https://update-info.co/login?uid=1188 or we will restrict access.,1,phish_corpus
+phish_124,"Hello,
+
+There was a problem with your recent payment. Click https://badbank-login.com/login?uid=3870 to review and avoid service interruption.",1,phish_corpus
+legit_148,"Happy birthday, Taylor! Hope you have a great day.
+
+Cheers, Bob",0,enron_sample
+phish_75,"Lee,
+
+Your account will be suspended unless you confirm your identity at https://secure-login.biz/login?uid=8373. Act immediately.",1,phish_corpus
+phish_194,"Hello,
+
+There was a problem with your recent payment. Click https://accountsecure.xyz/login?uid=1100 to review and avoid service interruption.",1,phish_corpus
+legit_117,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+legit_176,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+legit_185,"Dear Chris,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Dev Team",0,enron_sample
+legit_68,"Dear Lee,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Alice",0,enron_sample
+phish_87,"Hello,
+
+There was a problem with your recent payment. Click https://verify-payments.us/login?uid=5133 to review and avoid service interruption.",1,phish_corpus
+legit_45,"Dear Chris,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Bob",0,enron_sample
+legit_189,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_26,Security alert for Morgan: Unusual sign-in attempt. Verify at https://payment-confirm.org/login?uid=1117 or we will restrict access.,1,phish_corpus
+legit_169,"Happy birthday, Sam! Hope you have a great day.
+
+Cheers, Alice",0,enron_sample
+phish_116,"Dear Chris,
+
+We detected suspicious activity on your account. Please verify your information here: https://account-check.io/login?uid=4929
+
+Regards, PayService",1,phish_corpus
+legit_95,"Dear Alex,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Alice",0,enron_sample
+legit_96,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+legit_135,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_135,Security alert for Chris: Unusual sign-in attempt. Verify at https://update-info.co/login?uid=7807 or we will restrict access.,1,phish_corpus
+legit_42,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+legit_105,"Hi Chris,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Bob",0,enron_sample
+phish_13,"Taylor,
+
+Your account will be suspended unless you confirm your identity at https://update-info.co/login?uid=8019. Act immediately.",1,phish_corpus
+legit_122,"Hi Lee,
+
+Just checking in about the report due next week. Can you share a draft?
+
+Thanks, Bob",0,enron_sample
+legit_152,"Hello team,
+
+Reminder: meeting at 10am tomorrow in Conference Room A. Agenda attached.",0,enron_sample
+legit_171,"Dear Jordan,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Dev Team",0,enron_sample
+phish_157,Security alert for Alex: Unusual sign-in attempt. Verify at https://secure-login.biz/login?uid=5689 or we will restrict access.,1,phish_corpus
+legit_98,"Happy birthday, Sam! Hope you have a great day.
+
+Cheers, Carol",0,enron_sample
+legit_13,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_56,"Pat,
+
+Your account will be suspended unless you confirm your identity at https://update-info.co/login?uid=3608. Act immediately.",1,phish_corpus
+legit_144,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
+phish_169,Urgent: Confirm your login by visiting https://secure-login.biz/login?uid=7078 to avoid account lockout.,1,phish_corpus
+phish_188,"Urgent: Confirm your login by visiting https://secure-verify.net/login?uid=2494 to avoid account lockout.
+
+P.S. Please respond as soon as possible to avoid delay.",1,ai_synth
+phish_8,"Hello,
+
+There was a problem with your recent payment. Click https://secure-login.biz/login?uid=6977 to review and avoid service interruption.",1,phish_corpus
+legit_43,"Dear Alex,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Alice",0,enron_sample
+phish_153,"Dear Taylor,
+
+We detected suspicious activity on your account. Please verify your information here: https://secure-login.biz/login?uid=6661
+
+Regards, Acme Corp",1,phish_corpus
+legit_88,"Dear Taylor,
+
+Thanks for your submission. We'll review and get back to you within 3-5 business days.
+
+Best, Dev Team",0,enron_sample
+legit_162,FYI: The weekly status update is attached. Let me know if you'd like any changes.,0,enron_sample
