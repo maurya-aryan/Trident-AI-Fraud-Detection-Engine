@@ -105,6 +105,7 @@ def run():
                         alert = {
                             "subject": signal.subject,
                             "sender": signal.sender,
+                            "email_text": signal.parsed_text or "",
                             "snippet": (signal.parsed_text or "")[:240],
                             "risk_band": band,
                             "risk_score": score,
@@ -114,16 +115,6 @@ def run():
                         push_alert(alert)
                         # Windows toast popup only for HIGH / CRITICAL
                         if band in ("HIGH", "CRITICAL"):
-                            alert = {
-                                "subject": signal.subject,
-                                "sender": signal.sender,
-                                "snippet": (signal.parsed_text or "")[:240],
-                                "risk_band": band,
-                                "risk_score": score,
-                                "trident_result": result,
-                            }
-                            print(f"[poller] pushing alert: {band} {score}")
-                            push_alert(alert)
                             maybe_toast(f"TRIDENT: {band} alert", f"{signal.subject} — {score:.0f}/100")
 
                     # Mark seen optionally to avoid reprocessing (controlled by IMAP_MARK_SEEN)
