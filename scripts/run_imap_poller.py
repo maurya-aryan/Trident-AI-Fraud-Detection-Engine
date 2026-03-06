@@ -35,7 +35,7 @@ def maybe_toast(title: str, msg: str):
 
 def post_detect(payload: dict) -> Optional[dict]:
     try:
-        resp = requests.post(TRIDENT_URL, json=payload, timeout=20)
+        resp = requests.post(TRIDENT_URL, json=payload, timeout=90)
         resp.raise_for_status()
         return resp.json()
     except Exception as exc:
@@ -52,20 +52,39 @@ def mark_seen(imap: imaplib.IMAP4_SSL, uid: bytes):
     if IMAP_MARK_SEEN:
         imap.uid('STORE', uid, '+FLAGS', '\\Seen')
 
+def connect_imap() -> imaplib.IMAP4_SSL:
+    """Create a fresh authenticated IMAP connection."""
+    imap = imaplib.IMAP4_SSL(IMAP_HOST)
+    imap.login(IMAP_USER, IMAP_PASSWORD)
+    return imap
+
+
 def run():
     if not IMAP_USER or not IMAP_PASSWORD:
         print("Please set IMAP_USER and IMAP_PASSWORD environment variables.")
         return
 
-    print(f"Connecting to IMAP {IMAP_HOST} as {IMAP_USER}")
-    imap = imaplib.IMAP4_SSL(IMAP_HOST)
-    imap.login(IMAP_USER, IMAP_PASSWORD)
-    imap.select("INBOX")
-
     imap_processor = IMAPProcessor(config.IMAP_PROCESSOR_FILE)
+    imap: Optional[imaplib.IMAP4_SSL] = None
 
-    try:
-        while True:
+    while True:
+        # --- (Re)connect if we have no live connection ---
+        if imap is None:
+            try:
+                print(f"[poller] Connecting to IMAP {IMAP_HOST} as {IMAP_USER}")
+                imap = connect_imap()
+            except Exception as exc:
+                print(f"[poller] Connection failed: {exc}. Retrying in {POLL_INTERVAL}s …")
+                time.sleep(POLL_INTERVAL)
+                continue
+
+        try:
+            # Re-select INBOX every cycle so the server refreshes its
+            # message-count state and exposes emails that arrived since the
+            # last poll.  Without this, SEARCH UNSEEN only sees messages
+            # present when the mailbox was first selected.
+            imap.select("INBOX")
+
             typ, data = imap.search(None, 'UNSEEN')
             if typ != 'OK':
                 print("[poller] search error", typ)
@@ -122,12 +141,18 @@ def run():
                         mark_seen(imap, uid)
                 except Exception as exc:
                     print("[poller] failed to process message:", exc)
-            time.sleep(POLL_INTERVAL)
-    finally:
-        try:
-            imap.logout()
-        except Exception:
-            pass
+
+        except (imaplib.IMAP4.abort, imaplib.IMAP4.error, OSError) as exc:
+            # Connection was dropped or went stale — discard it and reconnect
+            # on the next iteration instead of crashing the poller.
+            print(f"[poller] IMAP connection lost ({exc}). Will reconnect …")
+            try:
+                imap.logout()
+            except Exception:
+                pass
+            imap = None
+
+        time.sleep(POLL_INTERVAL)
 
 if __name__ == '__main__':
     run()
