@@ -682,7 +682,45 @@ html, body,
     margin: 48px 0;
 }
 </style>
+""", unsafe_allow_html=True)
 
+# ── Route detection ─────────────────────────────────────────────────────────
+# Must happen before any page-specific chrome is rendered so the detail page
+# never shows the cover hero or the module/tab strip.
+_detail_alert_id = st.query_params.get("alert_id", None)
+_is_detail_page  = _detail_alert_id is not None
+
+if _is_detail_page:
+    # Override container width for full-screen detail view
+    st.markdown("""
+<style>
+.block-container {
+    max-width: 98% !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+}
+</style>
+""", unsafe_allow_html=True)
+    
+    # Minimal chrome: floating header only — no ocean blobs, no hero
+    st.markdown("""
+<div class="floating-header" id="floating-header">
+    <div class="header-logo">Trident</div>
+    <div class="header-nav">
+        <span class="header-nav-item">Overview</span>
+        <span class="header-nav-item">Analysis</span>
+        <span class="header-nav-item">Alerts</span>
+    </div>
+    <div class="header-status">
+        <div class="status-dot"></div>
+        SYSTEM ACTIVE
+    </div>
+</div>
+<div style="height:80px"></div>
+""", unsafe_allow_html=True)
+else:
+    # Full homepage chrome: ocean ambient + floating header + hero
+    st.markdown("""
 <!-- ── Ocean ambient layer ── -->
 <div class="ocean-ambient" id="ocean-ambient">
     <div class="ambient-blob blob-1"></div>
@@ -1024,22 +1062,23 @@ def display_result(result):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# MAIN CONTENT
+# MAIN CONTENT  (module strip only shown on the homepage)
 # ══════════════════════════════════════════════════════════════════════════════
-st.markdown("<div style='margin-top: 48px'></div>", unsafe_allow_html=True)
+if not _is_detail_page:
+    st.markdown("<div style='margin-top: 48px'></div>", unsafe_allow_html=True)
 
-# Module status strip
-mod_info = ["AI TEXT", "CREDENTIAL", "MALWARE", "INJECTION", "PHISHING", "URL", "FUSION", "CAMPAIGN", "SHAP"]
-cols = st.columns(9)
-for col, name in zip(cols, mod_info):
-    col.markdown(f"""
-    <div class="stat-pill">
-        <div class="stat-name">{name}</div>
-        <div class="stat-value">ACTIVE</div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Module status strip
+    mod_info = ["AI TEXT", "CREDENTIAL", "MALWARE", "INJECTION", "PHISHING", "URL", "FUSION", "CAMPAIGN", "SHAP"]
+    cols = st.columns(9)
+    for col, name in zip(cols, mod_info):
+        col.markdown(f"""
+        <div class="stat-pill">
+            <div class="stat-name">{name}</div>
+            <div class="stat-value">ACTIVE</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-st.markdown("<div style='height:56px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:56px'></div>", unsafe_allow_html=True)
 
 # ── Alert fetching utilities ─────────────────────────────────────────────────
 ALERTS_API = os.environ.get("TRIDENT_ALERTS_URL", "http://127.0.0.1:8000/alerts")
@@ -1060,7 +1099,97 @@ def fetch_alerts(limit: int = 30):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TABS
+# DETAIL PAGE — render alert and stop; tabs/hero are never reached
+# ══════════════════════════════════════════════════════════════════════════════
+if _is_detail_page:
+    all_alerts_detail = fetch_alerts(50)
+    try:
+        alert_idx = int(_detail_alert_id)
+        if 0 <= alert_idx < len(all_alerts_detail):
+            selected_alert = all_alerts_detail[alert_idx]
+            rec = selected_alert.get("alert", {})
+            tr_dict = rec.get("trident_result", {})
+
+            if st.button("← Back to Alerts", key="back_detail_top"):
+                st.query_params.clear()
+                st.rerun()
+
+            st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+
+            email_text    = rec.get("email_text") or rec.get("snippet") or ""
+            email_subject = rec.get("subject", "(no subject)")
+            email_sender  = rec.get("sender",  "(unknown)")
+            email_ts      = selected_alert.get("received_at", "")
+
+            # Create two-column layout: email on left, analysis on right
+            col_email, col_analysis = st.columns([1, 1], gap="medium")
+
+            with col_email:
+                st.markdown(f"""
+                <div class="glass-card-wrapper" style="border-left: 2px solid rgba(14,165,233,0.4);">
+                  <div class="label-text" style="margin-bottom:12px">EMAIL MESSAGE</div>
+                  <div style="margin-bottom:16px">
+                    <div style="font-size:1.05rem;font-weight:700;color:var(--text-main);margin-bottom:6px">{email_subject}</div>
+                    <div style="font-size:0.75rem;color:var(--text-muted);font-family:var(--font-mono);">
+                      <span style="color:var(--text-accent)">From:</span> {email_sender} &nbsp;·&nbsp;
+                      <span style="color:var(--text-accent)">Received:</span> {email_ts}
+                    </div>
+                  </div>
+                  <div style="background:rgba(0,0,0,0.4);border-radius:10px;padding:18px;border:1px solid var(--border-dim);max-height:calc(100vh - 280px);overflow-y:auto;">
+                    <div style="font-family:var(--font-mono);font-size:0.82rem;color:rgba(224,242,254,0.9);line-height:1.7;white-space:pre-wrap;">{email_text if email_text else "(No message content available)"}</div>
+                  </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            with col_analysis:
+                st.markdown("""
+                <div class="label-text" style="margin-bottom:12px;padding-left:4px;">TRIDENT ANALYSIS</div>
+                """, unsafe_allow_html=True)
+
+                if tr_dict and isinstance(tr_dict, dict):
+                    try:
+                        from core.data_models import TridentResult
+                        result = TridentResult(
+                            risk_score=tr_dict.get("risk_score", 0),
+                            risk_band=tr_dict.get("risk_band", "LOW"),
+                            confidence=tr_dict.get("confidence", 0),
+                            recommended_action=tr_dict.get("recommended_action", "VERIFY"),
+                            is_coordinated_attack=tr_dict.get("is_coordinated_attack", False),
+                            campaign_summary=tr_dict.get("campaign_summary", ""),
+                            module_scores=tr_dict.get("module_scores", {}),
+                            module_details=tr_dict.get("module_details", {}),
+                            top_factors=tr_dict.get("top_factors", []),
+                            explanation=tr_dict.get("explanation", ""),
+                            processing_time_ms=tr_dict.get("processing_time_ms", 0),
+                        )
+                        display_result(result)
+                    except Exception as e:
+                        st.error(f"Error displaying alert details: {e}")
+                        st.json(tr_dict)
+                else:
+                    st.warning("No TRIDENT result data available for this alert.")
+
+            # Advanced/Debug section at bottom, full width
+            st.markdown("<div style='height:32px'></div>", unsafe_allow_html=True)
+            if tr_dict and isinstance(tr_dict, dict):
+                with st.expander("🔧 Advanced / Debug Info", expanded=False):
+                    st.markdown("**Complete Alert Data:**")
+                    st.json(selected_alert)
+        else:
+            st.error("Invalid alert ID.")
+            if st.button("← Back to Alerts", key="back_invalid_d"):
+                st.query_params.clear()
+                st.rerun()
+    except (ValueError, TypeError):
+        st.error("Invalid alert ID format.")
+        if st.button("← Back to Alerts", key="back_error_d"):
+            st.query_params.clear()
+            st.rerun()
+    st.stop()   # ← prevents hero / module strip / tabs from rendering
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TABS  (only reached on the homepage)
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
@@ -1076,170 +1205,80 @@ tab_alerts, tab_demo, tab_email, tab_url, tab_full = st.tabs([
 # TAB 1 — ALERTS DASHBOARD
 # ─────────────────────────────────────────────────────────────────────────────
 with tab_alerts:
-    # Get query params for navigation
-    query_params = st.query_params
-    alert_id = query_params.get("alert_id", None)
-    
-    # Fetch all alerts
+    # Fetch alerts for the list view (detail view is handled above via st.stop())
     all_alerts = fetch_alerts(50)
-    
-    # If alert_id is provided, show detail view
-    if alert_id is not None:
-        try:
-            alert_idx = int(alert_id)
-            if 0 <= alert_idx < len(all_alerts):
-                selected_alert = all_alerts[alert_idx]
-                rec = selected_alert.get("alert", {})
-                tr_dict = rec.get("trident_result", {})
-                
-                # Back button
-                if st.button("← Back to Alerts", key="back_to_alerts"):
-                    st.query_params.clear()
-                    st.rerun()
-                
-                st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
-                
-                # Display email message if available
-                # Try to get email_text from multiple possible locations
-                email_text = rec.get("email_text") or rec.get("snippet") or ""
-                email_subject = rec.get("subject", "(no subject)")
-                email_sender = rec.get("sender", "(unknown)")
-                email_ts = selected_alert.get("received_at", "")
-                
-                st.markdown(f"""
-                <div class="glass-card-wrapper" style="border-left: 2px solid rgba(14,165,233,0.4);">
-                  <div class="label-text" style="margin-bottom:12px">EMAIL MESSAGE</div>
-                  <div style="margin-bottom:16px">
-                    <div style="font-size:1.1rem;font-weight:700;color:var(--text-main);margin-bottom:6px">{email_subject}</div>
-                    <div style="font-size:0.8rem;color:var(--text-muted);font-family:var(--font-mono);">
-                      <span style="color:var(--text-accent)">From:</span> {email_sender} &nbsp;·&nbsp; 
-                      <span style="color:var(--text-accent)">Received:</span> {email_ts}
-                    </div>
-                  </div>
-                  <div style="background:rgba(0,0,0,0.4);border-radius:10px;padding:18px;border:1px solid var(--border-dim);">
-                    <div style="font-family:var(--font-mono);font-size:0.85rem;color:rgba(224, 242, 254, 0.9);line-height:1.7;white-space:pre-wrap;">{email_text if email_text else "(No message content available)"}</div>
-                  </div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
-                
-                # Convert trident_result dict to TridentResult object for display_result()
-                if tr_dict and isinstance(tr_dict, dict):
-                    try:
-                        from core.data_models import TridentResult
-                        # Reconstruct TridentResult from dict
-                        result = TridentResult(
-                            risk_score=tr_dict.get("risk_score", 0),
-                            risk_band=tr_dict.get("risk_band", "LOW"),
-                            confidence=tr_dict.get("confidence", 0),
-                            recommended_action=tr_dict.get("recommended_action", "VERIFY"),
-                            is_coordinated_attack=tr_dict.get("is_coordinated_attack", False),
-                            campaign_summary=tr_dict.get("campaign_summary", ""),
-                            module_scores=tr_dict.get("module_scores", {}),
-                            module_details=tr_dict.get("module_details", {}),
-                            top_factors=tr_dict.get("top_factors", []),
-                            explanation=tr_dict.get("explanation", ""),
-                            processing_time_ms=tr_dict.get("processing_time_ms", 0),
-                        )
-                        display_result(result)
-                        
-                        # Add Advanced/Debug section with raw JSON at bottom
-                        with st.expander("🔧 Advanced / Debug Info", expanded=False):
-                            st.markdown("**Complete Alert Data:**")
-                            st.json(selected_alert)
-                    except Exception as e:
-                        st.error(f"Error displaying alert details: {e}")
-                        st.json(tr_dict)
-                else:
-                    st.warning("No TRIDENT result data available for this alert.")
-            else:
-                st.error("Invalid alert ID.")
-                if st.button("← Back to Alerts", key="back_invalid"):
-                    st.query_params.clear()
-                    st.rerun()
-        except (ValueError, TypeError):
-            st.error("Invalid alert ID format.")
-            if st.button("← Back to Alerts", key="back_error"):
-                st.query_params.clear()
-                st.rerun()
-    
-    # Otherwise show alerts list
-    else:
+
+    st.markdown("""
+    <div style="text-align:center;padding:20px 0 32px">
+      <div style="font-size:1.9rem;font-weight:700;color:var(--text-main);margin-bottom:10px;font-family:var(--font-display);letter-spacing:2px;">Live Alerts Dashboard</div>
+      <div style="font-size:0.9rem;color:var(--text-muted);font-family:var(--font-ui);">Real-time fraud detection from monitored email sources</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if not all_alerts:
         st.markdown("""
-        <div style="text-align:center;padding:20px 0 32px">
-          <div style="font-size:1.9rem;font-weight:700;color:var(--text-main);margin-bottom:10px;font-family:var(--font-display);letter-spacing:2px;">Live Alerts Dashboard</div>
-          <div style="font-size:0.9rem;color:var(--text-muted);font-family:var(--font-ui);">Real-time fraud detection from monitored email sources</div>
+        <div class="glass-card-wrapper" style="text-align:center;padding:56px 28px;">
+          <div style="font-size:3.5rem;margin-bottom:20px;opacity:0.25">📭</div>
+          <div style="font-size:1.2rem;color:var(--text-muted);font-family:var(--font-ui);font-weight:600;">No alerts yet</div>
+          <div style="font-size:0.85rem;color:var(--text-faint);margin-top:10px;font-family:var(--font-ui);">Alerts will appear here when the IMAP poller detects suspicious emails</div>
         </div>
         """, unsafe_allow_html=True)
-        
-        if not all_alerts:
-            st.markdown("""
-            <div class="glass-card-wrapper" style="text-align:center;padding:56px 28px;">
-              <div style="font-size:3.5rem;margin-bottom:20px;opacity:0.25">📭</div>
-              <div style="font-size:1.2rem;color:var(--text-muted);font-family:var(--font-ui);font-weight:600;">No alerts yet</div>
-              <div style="font-size:0.85rem;color:var(--text-faint);margin-top:10px;font-family:var(--font-ui);">Alerts will appear here when the IMAP poller detects suspicious emails</div>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown(f"""
-            <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:20px;padding:0 8px;font-family:var(--font-ui);">
-              Showing <b style="color:var(--text-accent);font-weight:700;">{len(all_alerts)}</b> most recent alerts · Click any alert to view detailed analysis
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Display alerts as clickable cards
-            for idx, entry in enumerate(all_alerts):
-                rec = entry.get("alert", {})
-                ts = entry.get("received_at", "")
-                subj = rec.get("subject") or "(no subject)"
-                sender = rec.get("sender") or "(unknown)"
-                band = rec.get("risk_band") or "LOW"
-                score = rec.get("risk_score") or 0
-                
-                color = _BAND_COLOR.get(band, "#888")
-                bg = _BAND_BG.get(band, "rgba(100,100,100,0.05)")
-                icon = _BAND_ICON.get(band, "❓")
-                
-                # Create container with card and button side by side
-                col1, col2 = st.columns([7, 1])
-                
-                with col1:
-                    # Display card content
-                    card_html = f"""
-                    <div style="
-                        background:{bg};
-                        border:1px solid {color}33;
-                        border-radius:12px 0 0 12px;
-                        padding:16px 20px;
-                        ">
-                      <div style="display:flex;align-items:center;gap:16px;">
-                        <div style="font-size:2rem;line-height:1">{icon}</div>
-                        <div style="flex:1;">
-                          <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
-                            <span style="background:{color}22;color:{color};padding:4px 12px;border-radius:6px;font-size:0.7rem;font-weight:700;letter-spacing:0.5px">{band}</span>
-                            <span style="color:{color};font-size:1.1rem;font-weight:700">{score:.0f}/100</span>
-                            <span style="color:#334155;font-size:1.2rem">·</span>
-                            <span style="color:#e2e8f0;font-size:0.95rem;font-weight:600">{subj}</span>
-                          </div>
-                          <div style="font-size:0.8rem;color:#64748b;">
-                            <span style="color:#94a3b8">From:</span> {sender} &nbsp;·&nbsp; <span style="color:#94a3b8">At:</span> {ts}
-                          </div>
-                        </div>
+    else:
+        st.markdown(f"""
+        <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:20px;padding:0 8px;font-family:var(--font-ui);">
+          Showing <b style="color:var(--text-accent);font-weight:700;">{len(all_alerts)}</b> most recent alerts · Click any alert to view detailed analysis
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Display alerts as clickable cards
+        for idx, entry in enumerate(all_alerts):
+            rec = entry.get("alert", {})
+            ts = entry.get("received_at", "")
+            subj = rec.get("subject") or "(no subject)"
+            sender = rec.get("sender") or "(unknown)"
+            band = rec.get("risk_band") or "LOW"
+            score = rec.get("risk_score") or 0
+
+            color = _BAND_COLOR.get(band, "#888")
+            bg = _BAND_BG.get(band, "rgba(100,100,100,0.05)")
+            icon = _BAND_ICON.get(band, "❓")
+
+            # Create container with card and button side by side
+            col1, col2 = st.columns([7, 1])
+
+            with col1:
+                card_html = f"""
+                <div style="
+                    background:{bg};
+                    border:1px solid {color}33;
+                    border-radius:12px 0 0 12px;
+                    padding:16px 20px;
+                    ">
+                  <div style="display:flex;align-items:center;gap:16px;">
+                    <div style="font-size:2rem;line-height:1">{icon}</div>
+                    <div style="flex:1;">
+                      <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+                        <span style="background:{color}22;color:{color};padding:4px 12px;border-radius:6px;font-size:0.7rem;font-weight:700;letter-spacing:0.5px">{band}</span>
+                        <span style="color:{color};font-size:1.1rem;font-weight:700">{score:.0f}/100</span>
+                        <span style="color:#334155;font-size:1.2rem">·</span>
+                        <span style="color:#e2e8f0;font-size:0.95rem;font-weight:600">{subj}</span>
+                      </div>
+                      <div style="font-size:0.8rem;color:#64748b;">
+                        <span style="color:#94a3b8">From:</span> {sender} &nbsp;·&nbsp; <span style="color:#94a3b8">At:</span> {ts}
                       </div>
                     </div>
-                    """
-                    st.markdown(card_html, unsafe_allow_html=True)
-                
-                with col2:
-                    # Button on the right side
-                    st.markdown("<div style='height:25px'></div>", unsafe_allow_html=True)
-                    if st.button("▶ View", key=f"alert_btn_{idx}", type="primary", use_container_width=True):
-                        st.query_params["alert_id"] = str(idx)
-                        st.rerun()
-                
-                # Add spacing between cards
-                st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+                  </div>
+                </div>
+                """
+                st.markdown(card_html, unsafe_allow_html=True)
+
+            with col2:
+                st.markdown("<div style='height:25px'></div>", unsafe_allow_html=True)
+                if st.button("▶ View", key=f"alert_btn_{idx}", type="primary", use_container_width=True):
+                    st.query_params["alert_id"] = str(idx)
+                    st.rerun()
+
+            st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB 2 — DEMO ATTACK
