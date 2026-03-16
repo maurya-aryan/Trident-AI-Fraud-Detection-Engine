@@ -4,7 +4,7 @@ import { useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 
  * SequencePlayer — Fixed <canvas> that draws the current frame.
  * Handles cover-fit drawing logic and exposes setFrame via ref.
  */
-const SequencePlayer = forwardRef(function SequencePlayer({ frames, width, height }, ref) {
+const SequencePlayer = forwardRef(function SequencePlayer({ frames, bgColor = '#050505' }, ref) {
   const canvasRef = useRef(null);
   const currentFrameRef = useRef(0);
 
@@ -21,22 +21,29 @@ const SequencePlayer = forwardRef(function SequencePlayer({ frames, width, heigh
     const iw = img.naturalWidth;
     const ih = img.naturalHeight;
 
-    // Cover-fit logic
-    const scale = Math.max(cw / iw, ch / ih);
+    // Fill background to avoid transparency flicker
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, cw, ch);
+
+    // Scale it down: use contain fit (Math.min) and multiply by 0.85 
+    const scale = Math.min(cw / iw, ch / ih) * 0.85;
     const sw = iw * scale;
     const sh = ih * scale;
+    
+    // Keep it horizontally centered
     const sx = (cw - sw) / 2;
-    const sy = (ch - sh) / 2;
+    // Anchor closer to the bottom (leaves a 5% gap at bottom) 
+    const sy = ch - sh - (ch * 0.05);
 
-    ctx.clearRect(0, 0, cw, ch);
     ctx.drawImage(img, sx, sy, sw, sh);
-  }, [frames]);
+  }, [frames, bgColor]);
 
   useImperativeHandle(ref, () => ({
     setFrame: (n) => {
       const idx = Math.max(0, Math.min(Math.floor(n), (frames?.length || 1) - 1));
+      if (currentFrameRef.current === idx) return; // skip redundant draws
       currentFrameRef.current = idx;
-      drawFrame(idx);
+      requestAnimationFrame(() => drawFrame(idx));
     },
     getCanvas: () => canvasRef.current,
   }), [frames, drawFrame]);
@@ -47,8 +54,11 @@ const SequencePlayer = forwardRef(function SequencePlayer({ frames, width, heigh
     if (!canvas) return;
 
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
       drawFrame(currentFrameRef.current);
     };
 
@@ -60,7 +70,6 @@ const SequencePlayer = forwardRef(function SequencePlayer({ frames, width, heigh
   return (
     <canvas
       ref={canvasRef}
-      className="sequence-canvas"
       style={{
         position: 'fixed',
         top: 0,

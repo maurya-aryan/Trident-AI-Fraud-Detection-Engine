@@ -4,6 +4,9 @@
 
 **Architecture:** Video-to-Frames Scrubbing \+ Hybrid 2D Physics
 
+  Use /home/iyad/Projects/Hackathon/Trident-AI-Fraud-Detection-Engine/assets
+  folder for the assets.  
+
 ## ---
 
 **1\. Project Overview & Architecture Tree**
@@ -14,7 +17,7 @@
 
 Plaintext
 
-src/  
+Frontend/  
 ├── App.jsx                        \# Main orchestrator & GSAP ScrollTrigger context  
 ├── components/  
 │   ├── SequencePlayer.jsx         \# Handles Canvas drawing & frame preloading  
