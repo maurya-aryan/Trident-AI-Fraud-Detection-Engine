@@ -25,14 +25,16 @@ const SequencePlayer = forwardRef(function SequencePlayer({ frames, bgColor = '#
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, cw, ch);
 
-    // Fill screen till edges (cover logic)
-    const scale = Math.max(cw / iw, ch / ih);
+    // Force the image to over-fill the screen horizontally to crop the bottom (width-based scaling)
+    // Multiplying by 1.05 zooms the image in an extra 5%
+    const scale = (cw / iw);
     const sw = iw * scale;
     const sh = ih * scale;
-    
-    // Centered
+
+    // Center it horizontally
     const sx = (cw - sw) / 2;
-    const sy = (ch - sh) / 2;
+    // Push the image down slightly so the extra 5% falls off the bottom edge, hiding the watermark
+    const sy = ((ch - sh) / 2) - 20;
 
     ctx.drawImage(img, sx, sy, sw, sh);
   }, [frames, bgColor]);
