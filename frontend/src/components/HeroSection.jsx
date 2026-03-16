@@ -1,162 +1,264 @@
-import { useRef, useEffect } from 'react';
-import { gsap } from 'gsap';
+import React, { useRef, useMemo, useEffect, Component } from 'react';
+import { Canvas, useLoader, useFrame } from '@react-three/fiber';
+import { useGLTF, Center } from '@react-three/drei';
+import * as THREE from 'three';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
+import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import useFrameLoader from '../hooks/useFrameLoader';
-import SequencePlayer from './SequencePlayer';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const FRAME_COUNT = 192;
-const FRAME_PATH = '/sequences/hero-rise';
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  componentDidCatch(error, errorInfo) { console.error("Canvas Error:", error, errorInfo); }
+  render() {
+    if (this.state.hasError) return <div className="text-red-500 z-50 p-10 bg-black absolute inset-0">Canvas Error: {this.state.error?.message}</div>;
+    return this.props.children;
+  }
+}
 
-export default function HeroSection() {
-  const playerRef = useRef(null);
-  const sectionRef = useRef(null);
-  const overlayRefs = useRef([]);
+// --- 3D Components ---
 
-  const { frames, loaded, progress } = useFrameLoader(FRAME_PATH, FRAME_COUNT, {
-    prefix: '',
-    extension: 'jpg',
-    padLength: 4,
+function ProceduralCity() {
+  const obj = useLoader(OBJLoader, '/models/buildings.obj');
+  const meshRef = useRef();
+
+  const gridSize = 40;
+  const boxSize = 3;
+  const count = gridSize * gridSize;
+
+  // Extract the geometry from the loaded OBJ
+  const geometry = useMemo(() => {
+    let geo;
+    if (obj) {
+      obj.traverse((child) => {
+        if (child.isMesh && !geo) {
+          geo = child.geometry;
+        }
+      });
+    }
+    return geo;
+  }, [obj]);
+
+  // Cybersecurity Material (Dark grey base, high metalness, neon red/cyan emissive)
+  const material = useMemo(() => {
+    return new THREE.MeshStandardMaterial({
+      color: '#161616',
+      metalness: 0.8,
+      roughness: 0.2,
+      emissive: '#0a0a0a', // very subtle glow base
+    });
+  }, []);
+
+  // Compute transformation matrices for each building instance
+  const matrices = useMemo(() => {
+    const dummy = new THREE.Object3D();
+    const mats = [];
+    const minScale = 0.001;
+    const maxScale = 0.009;
+
+    for (let i = 0; i < gridSize; i++) {
+      for (let j = 0; j < gridSize; j++) {
+        dummy.position.set(i * boxSize, 0, j * boxSize);
+        // Random height scale based on original app.js logic
+        dummy.scale.set(0.01, Math.random() * (maxScale - minScale) + minScale, 0.01);
+        dummy.updateMatrix();
+        mats.push(dummy.matrix.clone());
+      }
+    }
+    return mats;
+  }, [gridSize, boxSize]);
+
+  useEffect(() => {
+    if (meshRef.current && matrices.length > 0) {
+      matrices.forEach((mat, i) => {
+        meshRef.current.setMatrixAt(i, mat);
+      });
+      meshRef.current.instanceMatrix.needsUpdate = true;
+    }
+  }, [matrices]);
+
+  if (!geometry) return null;
+
+  return (
+    <instancedMesh ref={meshRef} args={[geometry, material, count]} position={[-gridSize - 10, -14, -gridSize - 10]} />
+  );
+}
+
+function TridentModel() {
+  const { scene } = useGLTF('/models/trident.glb');
+  const meshRef = useRef();
+  
+  // Slowly rotate the trident continually
+  useFrame(() => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += 0.005;
+    }
   });
 
-  // Wire GSAP ScrollTrigger → frame scrubbing
+  // We wrap the original scene in a Center component because the original 
+  // model has an extreme internal offset that places it WAY off camera.
+  // The model's native size is also massive, so we drastically reduce the scale here.
+  return (
+    <group ref={meshRef} position={[0, -25, 0]} scale={0.005}>
+      <Center>
+        <primitive object={scene} />
+      </Center>
+    </group>
+  );
+}
+useGLTF.preload('/models/trident.glb');
+
+// Scene setup including Lights and Camera attached to GSAP ScrollTrigger
+function Scene({ scrollContainerRef, titleRef, cardsContainerRef, cardsRef }) {
+  const tridentRef = useRef(null);
+  const cameraGroupRef = useRef(null);
+  const cameraRef = useRef(null);
+
+  const [targetScroll, setTargetScroll] = React.useState(0);
+  const smoothScroll = useRef(0);
+  const lerp = (a, b, n) => (1 - n) * a + n * b;
+
   useEffect(() => {
-    if (!loaded || !playerRef.current) return;
-
-    // Draw the first frame immediately
-    playerRef.current.setFrame(0);
-
-    const frameObj = { frame: 0 };
-
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: 'top top',
-        end: 'bottom bottom',
-        scrub: 0.3,
-      },
+    // We use GSAP only to track the scroll position cleanly
+    const st = ScrollTrigger.create({
+      trigger: scrollContainerRef.current,
+      start: 'top top',
+      end: 'bottom bottom',
+      onUpdate: (self) => {
+        setTargetScroll(self.progress);
+      }
     });
 
-    // Scrub frames 0 → 191
-    tl.to(frameObj, {
-      frame: FRAME_COUNT - 1,
-      snap: 'frame',
-      ease: 'none',
-      onUpdate: () => {
-        playerRef.current?.setFrame(frameObj.frame);
-      },
-    }, 0);
+    return () => st.kill();
+  }, [scrollContainerRef]);
 
-    // Text overlay animations — synced to timeline progress
-    // Overlay 0: "TRIDENT AI" title — fades in at 25%, out at 55%
-    tl.fromTo(overlayRefs.current[0],
-      { opacity: 0, y: 40 },
-      { opacity: 1, y: 0, duration: 0.1, ease: 'power2.out' },
-      0.20
-    );
-    tl.to(overlayRefs.current[0],
-      { opacity: 0, y: -20, duration: 0.1, ease: 'power2.in' },
-      0.50
-    );
+  useFrame(() => {
+    // The "Inertia Engine": closing 5% of the distance every frame
+    smoothScroll.current = lerp(smoothScroll.current, targetScroll, 0.05);
+    
+    const s = smoothScroll.current;
 
-    // Overlay 1: Tagline — fades in at 50%, out at 75%
-    tl.fromTo(overlayRefs.current[1],
-      { opacity: 0, y: 40 },
-      { opacity: 1, y: 0, duration: 0.1, ease: 'power2.out' },
-      0.45
-    );
-    tl.to(overlayRefs.current[1],
-      { opacity: 0, y: -20, duration: 0.1, ease: 'power2.in' },
-      0.70
-    );
+    // --- STAGE 1 LOGIC (0.0 to 0.4 of scroll) ---
+    if (tridentRef.current) {
+      if (s < 0.2) {
+        // 0.0 -> 0.2: Entrance (Rising from -25 to -10)
+        const p = s / 0.2;
+        tridentRef.current.position.y = -25 + (15 * p);
+      } else if (s < 0.3) {
+        // 0.2 -> 0.3: The Pause (Static @ -10)
+        tridentRef.current.position.y = -10;
+      } else if (s < 0.45) {
+        // 0.3 -> 0.45: Exit (Shooting from -10 to 60)
+        const p = (s - 0.3) / 0.15;
+        // Cubic ease-in for the "shoot" effect
+        const easeP = p * p * p;
+        tridentRef.current.position.y = -10 + (70 * easeP);
+      } else {
+        // Past Stage 1: Keep it out of frame
+        tridentRef.current.position.y = 60;
+      }
+    }
 
-    // Overlay 2: CTA — fades in at 80%, stays
-    tl.fromTo(overlayRefs.current[2],
-      { opacity: 0, y: 30 },
-      { opacity: 1, y: 0, duration: 0.15, ease: 'power2.out' },
-      0.78
-    );
-
-    return () => {
-      tl.kill();
-      ScrollTrigger.getAll().forEach(st => st.kill());
-    };
-  }, [loaded, frames]);
+    // Camera Tilt & Alignment
+    if (cameraRef.current) {
+      cameraRef.current.lookAt(0, 0, 0);
+    }
+  });
 
   return (
     <>
-      {/* Loading overlay */}
-      {!loaded && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background">
-          <div className="relative w-48 h-1 bg-white/10 rounded-full overflow-hidden mb-4">
-            <div
-              className="absolute inset-y-0 left-0 bg-accent rounded-full transition-all duration-200"
-              style={{ width: `${Math.round(progress * 100)}%` }}
-            />
-          </div>
-          <p className="text-xs tracking-[0.25em] uppercase text-white/30">
-            Loading TRIDENT · {Math.round(progress * 100)}%
-          </p>
-        </div>
-      )}
+      <ambientLight intensity={1.5} /> {/* Increased ambient light */}
+      <spotLight position={[50, 100, 50]} color="#00d6ff" intensity={15000} castShadow /> {/* Brighter, cyan spot */}
+      <spotLight position={[-50, 100, -50]} color="#ff0055" intensity={10000} castShadow /> {/* Neon red accent */}
+      <pointLight position={[0, 20, 20]} color="#ffffff" intensity={200} /> {/* Center fill */}
 
-      {/* The canvas layer — fixed behind everything */}
-      <SequencePlayer ref={playerRef} frames={frames} bgColor="#050505" />
+      <group ref={cameraGroupRef}>
+         <perspectiveCamera ref={cameraRef} makeDefault position={[0, 40, 120]} fov={35} /> {/* Moved closer, adjusted FOV */}
+      </group>
       
-      {/* Vignette overlay to seamlessly blend the off-black frames into the background */}
-      <div className="fixed inset-0 z-10 vignette-overlay" />
-
-      {/* Scroll spacer — creates the scroll length for scrubbing */}
-      <section ref={sectionRef} className="relative w-full" style={{ height: '500vh' }}>
-        {/* Pinned viewport — overlay text container */}
-        <div className="sticky top-0 h-screen w-full flex items-center justify-center pointer-events-none" style={{ zIndex: 20 }}>
-
-          {/* Overlay 0: TRIDENT AI title */}
-          <div
-            ref={(el) => (overlayRefs.current[0] = el)}
-            className="absolute inset-0 flex flex-col items-center justify-center text-center px-6"
-            style={{ opacity: 0 }}
-          >
-            <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight leading-none"
-                style={{
-                  background: 'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(0,214,255,0.8) 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  filter: 'drop-shadow(0 0 40px rgba(0, 214, 255, 0.3))',
-                }}>
-              TRIDENT AI
-            </h1>
-          </div>
-
-          {/* Overlay 1: Tagline */}
-          <div
-            ref={(el) => (overlayRefs.current[1] = el)}
-            className="absolute inset-0 flex flex-col items-center justify-end pb-32 text-center px-6"
-            style={{ opacity: 0 }}
-          >
-            <p className="text-lg sm:text-xl md:text-2xl font-semibold tracking-[0.15em] uppercase"
-               style={{ color: 'rgba(0, 214, 255, 0.9)' }}>
-              Absolute security. Zero compromise.
-            </p>
-            <p className="mt-3 text-sm md:text-base text-white/50 max-w-lg">
-              Next-generation multimodal fraud detection, engineered for the speed of modern finance.
-            </p>
-          </div>
-
-          {/* Overlay 2: Scroll CTA */}
-          <div
-            ref={(el) => (overlayRefs.current[2] = el)}
-            className="absolute bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-            style={{ opacity: 0 }}
-          >
-            <span className="text-xs tracking-[0.25em] uppercase text-white/40">
-              Scroll to explore
-            </span>
-            <div className="w-px h-10 bg-gradient-to-b from-white/40 to-transparent" />
-          </div>
-        </div>
-      </section>
+      <React.Suspense fallback={null}>
+        <ProceduralCity />
+      </React.Suspense>
+      
+      <group ref={tridentRef} position={[0, -20, 0]}> {/* Starts lower */}
+        <React.Suspense fallback={null}>
+          <TridentModel />
+        </React.Suspense>
+      </group>
     </>
+  );
+}
+
+// --- Main Page Component ---
+
+export default function HeroSection() {
+  const scrollContainerRef = useRef(null);
+  
+  // UI Refs
+  const titleRef = useRef(null);
+  const cardsContainerRef = useRef(null);
+  const cardsRef = useRef([]);
+
+  const setCardRef = (el, index) => {
+    cardsRef.current[index] = el;
+  };
+
+  const featureCards = [
+    "Credential Exposure", "Malware Scanner", "AI Text Detection",
+    "Email Phishing", "URL Detection", "Prompt Injection",
+    "Fusion Model", "Campaign Graph", "SHAP Explainer"
+  ];
+
+  return (
+    <div ref={scrollContainerRef} className="relative w-full h-[800vh] bg-black">
+      {/* Fixed Sticky Wrapper for Canvas and UI */}
+      <div className="sticky top-0 h-screen w-full overflow-hidden">
+        
+        {/* ThreeJS Background Canvas */}
+        <div className="absolute inset-0 z-0 bg-black">
+          <ErrorBoundary>
+            <Canvas gl={{ antialias: true, alpha: true }}>
+              <color attach="background" args={['#000000']} />
+              <fog attach="fog" args={['#000000', 1, 250]} />
+              
+              <Scene 
+                scrollContainerRef={scrollContainerRef}
+                titleRef={titleRef}
+                cardsContainerRef={cardsContainerRef}
+                cardsRef={cardsRef}
+              />
+            </Canvas>
+          </ErrorBoundary>
+        </div>
+
+        {/* --- Phase 1 UI: Main Title (Temporarily hidden for Stage 1 testing) --- */}
+        <div ref={titleRef} className="hidden absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none opacity-0">
+            <h1 className="text-5xl md:text-7xl font-black text-white text-glow mb-4 text-center">TRIDENT</h1>
+            <p className="text-xl md:text-2xl text-cyan-400 font-medium tracking-widest uppercase">AI Fraud Detection Engine</p>
+        </div>
+
+        {/* --- Phase 3 UI: The Arsenal Cards (Temporarily hidden for Stage 1 testing) --- */}
+        <div ref={cardsContainerRef} className="hidden absolute inset-0 z-20 flex items-center justify-center pointer-events-none transition-colors duration-300">
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-[90%] max-w-6xl mx-auto p-4">
+              {featureCards.map((title, i) => (
+                <div 
+                  key={i} 
+                  ref={(el) => setCardRef(el, i)}
+                  className="glass-panel p-6 rounded-xl border border-white/10 opacity-0 translate-y-10 flex items-center justify-center shadow-[0_0_30px_rgba(0,214,255,0.05)] hover:shadow-[0_0_30px_rgba(0,214,255,0.2)] hover:border-cyan-500/50 transition-all duration-300 transform"
+                  style={{ pointerEvents: 'auto' }}
+                >
+                  <h3 className="text-lg md:text-xl font-semibold text-white/90 text-center">{title}</h3>
+                </div>
+              ))}
+           </div>
+        </div>
+
+      </div>
+    </div>
   );
 }

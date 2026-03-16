@@ -6,7 +6,7 @@ import SequencePlayer from './SequencePlayer';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const FRAME_COUNT = 444;
+const FRAME_COUNT = 200;
 const FRAME_PATH = '/sequences/trident';
 
 export default function TridentHero() {
@@ -19,34 +19,60 @@ export default function TridentHero() {
     padLength: 4,
   });
 
-  // Wire GSAP ScrollTrigger → frame scrubbing
+  // Setup GSAP Hybrid Animation
   useEffect(() => {
     if (!loaded || !playerRef.current) return;
 
-    playerRef.current.setFrame(0);
+    // Start at frame 20 as requested
+    playerRef.current.setFrame(20);
 
-    const frameObj = { frame: 0 };
+    // This object tracks where the scrollbar *wants* the frame to be
+    const scrollProxy = { frame: 20 };
+    let isAutoPlaying = false;
+    let autoPlayFinished = false;
 
+    // The scroll timeline maps the full scroll distance to frames 20-199
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: sectionRef.current,
         start: 'top top',
         end: 'bottom bottom',
-        scrub: 0.1, // Tight scrub for immediate response
+        scrub: 0.1,
+        onEnter: () => {
+          // When the user starts scrolling down into this 900vh section, intercept the playback!
+          if (!isAutoPlaying && !autoPlayFinished) {
+            isAutoPlaying = true;
+            
+            // This detached Tween forces the canvas to play like a video from frame 20 to 176, ignoring the scrollbar
+            const autoProxy = { frame: 20 };
+            gsap.to(autoProxy, {
+              frame: 176,
+              duration: 3.5, // Automated playback takes 3.5 seconds
+              ease: "power2.inOut",
+              onUpdate: () => {
+                playerRef.current?.setFrame(Math.round(autoProxy.frame));
+              },
+              onComplete: () => {
+                isAutoPlaying = false;
+                autoPlayFinished = true;
+              }
+            });
+          }
+        }
       },
     });
 
-    // 444 total frames mapped to the scroll
-    // Scene 1: Frames 0-191 (Trident comes up)
-    // Scene 2: Frames 192-383 (Trident goes up)
-    // Scene 3: Frames 384-443 (Ocean starts moving)
-    tl.to(frameObj, {
+    // Map the scrollbar entirely from 20 to 199
+    tl.to(scrollProxy, {
       frame: FRAME_COUNT - 1,
       ease: 'none',
       onUpdate: () => {
-        // Round to nearest frame so we don't accidentally skip frames because of snapping logic
-        const currentF = Math.round(frameObj.frame);
-        playerRef.current?.setFrame(currentF);
+        // If the auto-play video is running, ignore the scrollbar
+        // If the auto-play finished, let the scrollbar control the frames, but snap it to at least frame 176
+        if (!isAutoPlaying && autoPlayFinished) {
+          const currentScrollF = Math.max(176, Math.round(scrollProxy.frame));
+          playerRef.current?.setFrame(currentScrollF);
+        }
       },
     }, 0);
 

@@ -26,7 +26,7 @@ const SequencePlayer = forwardRef(function SequencePlayer({ frames, bgColor = '#
     ctx.fillRect(0, 0, cw, ch);
 
     // 1. Force the image to cover the entire screen, then zoom in an EXTRA 8%
-    const scale = Math.max(cw / iw, ch / ih) * 1.08;
+    const scale = Math.max(cw / iw, ch / ih) * .999;
     const sw = iw * scale;
     const sh = ih * scale;
 
