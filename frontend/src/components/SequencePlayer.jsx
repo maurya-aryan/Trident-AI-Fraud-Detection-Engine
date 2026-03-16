@@ -25,15 +25,14 @@ const SequencePlayer = forwardRef(function SequencePlayer({ frames, bgColor = '#
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, cw, ch);
 
-    // Scale it down: use contain fit (Math.min) and multiply by 0.85 
-    const scale = Math.min(cw / iw, ch / ih) * 0.85;
+    // Fill screen till edges (cover logic)
+    const scale = Math.max(cw / iw, ch / ih);
     const sw = iw * scale;
     const sh = ih * scale;
     
-    // Keep it horizontally centered
+    // Centered
     const sx = (cw - sw) / 2;
-    // Anchor closer to the bottom (leaves a 5% gap at bottom) 
-    const sy = ch - sh - (ch * 0.05);
+    const sy = (ch - sh) / 2;
 
     ctx.drawImage(img, sx, sy, sw, sh);
   }, [frames, bgColor]);

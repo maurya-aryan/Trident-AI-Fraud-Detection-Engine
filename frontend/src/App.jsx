@@ -3,7 +3,7 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import Navbar from './components/Navbar';
-import HeroSection from './components/HeroSection';
+import TridentHero from './components/TridentHero';
 import AboutSection from './components/AboutSection';
 import PipelineSection from './components/PipelineSection';
 import TerminalSection from './components/TerminalSection';
@@ -24,7 +24,7 @@ function App() {
       
       <main className="relative flex flex-col w-full">
         <div id="architecture">
-          <HeroSection />
+          <TridentHero />
         </div>
         
         <AboutSection />

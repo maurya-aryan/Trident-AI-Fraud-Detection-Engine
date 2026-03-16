@@ -1,199 +1,83 @@
-# **MAGE / FRAME GENERATION PROMPTS (WpDev Keyboard \+ Fog Background)**
+This setup is serious engineering. Combining a high-performance GSAP Canvas pipeline with Matter.js physics is exactly the kind of show-stopping architecture that would dominate a hackathon with Team Solaris. Moving from Framer Motion to GSAP ScrollTrigger for this specific use case is the absolute right call—it handles frame-scrubbing significantly better and gives you that buttery-smooth timeline control.
 
-## **1\) HERO SHOT (single frame / key visual)**
+Here is the master prompt tailored precisely to your tech stack, scene breakdown, and layout requirements. You can copy and paste this directly to your AI agent.
 
-Cinematic product shot of a tangerine-orange mechanical keyboard with off-white and light gray keycaps, “WpDev”, floating on soft white clouds, light gray studio fog background, premium diffused lighting, 4k, photorealistic.
+The "Project Trident" Master Prompt
+ACT AS:
+A world-class Creative Developer (Awwwards-level) specializing in React 19, GSAP ScrollTrigger, HTML5 Canvas performance, and interactive physics.
 
----
+THE TASK:
+Build a high-end “Scrollytelling” pinned Hero Section for a project called “Project Trident”.
+The core mechanic is a massive pinned section where user scrolling scrubs through a high-resolution 192-frame image sequence drawn on an HTML5 <canvas>. As the sequence progresses, different placeholder text overlays fade in and out. In the final scene, a Matter.js physics simulation is triggered over the canvas. Once the 192 frames finish, the hero section unpins, and the user can scroll normally to the rest of the website.
 
-## **2\) ULTRA-PREMIUM PRODUCT PHOTOGRAPHY (assembled keyboard)**
+TECH STACK:
 
-Ultra-premium product photography of a sleek **tangerine-orange / amber anodized aluminum mechanical keyboard** called “WpDev” resting within **soft white clouds / volumetric fog**, minimalistic editorial studio photoshoot. Background is **light gray-to-white mist** with gentle gradient falloff, airy and clean. Soft diffused key light with subtle rim highlights outlining the keyboard silhouette, **keycap edges**, and the **rotary knob** on the top-right. Controlled reflections on the orange metal case; crisp detail on **off-white and light gray keycaps** with a few matching orange accent keys. Shallow depth of field, sharp focus on the keyboard, cinematic but bright, luxury modern hardware aesthetic. No clutter, no text overlays, no logos emphasized. Shot with a professional DSLR, 85mm lens, f/2.0, ultra-high resolution, photorealistic, premium editorial product photography.
+Framework: React 19 + Vite (Node.js)
 
----
+Styling: Tailwind CSS + Vanilla CSS (for custom glassmorphism / ethereal UI glows)
 
-## **3\) LAYERED “OPENING” ENGINEERING VIEW (for the scroll sequence look)**
+Animation Engine: GSAP (ScrollTrigger for timeline mapping and pinning)
 
-Exploded **layer-separated engineering view** of the same “WpDev” keyboard with a **tangerine-orange anodized aluminum chassis**, every layer precisely separated and floating in perfect alignment, suspended in mid-air within **soft white/gray studio fog and cloud haze**. Show the keyboard opening into clean layers: **off-white \+ light gray keycaps**, switches, top plate, PCB, stabilizers, foam layers, controller, USB-C daughterboard, bottom case, screws, and the **rotary knob assembly**—all centered, evenly spaced, perfectly aligned. Lighting matches the hero: soft diffused illumination with gentle rim highlights, controlled reflections on orange metal and matte plastics. Editorial engineering aesthetic, ultra-sharp focus, photorealistic, ultra-high resolution. **No labels, no annotations, no text.**
+Physics Engine: Matter.js (2D physics for Scene 3)
 
----
+Rendering: HTML5 Canvas (to render 1920x1080 frames without DOM lag)
 
-## **4\) MOTION / SEQUENCE DIRECTION (what the 120 frames should do)**
+VISUAL DIRECTION (Deep Ocean Cinematic Theme):
 
-Create a 120-frame sequence where the keyboard performs a **scroll-friendly mechanical “expand → open → reassemble”** action:
+Background: The canvas backdrop must be a deep, dark oceanic navy/black (e.g., #040914 to #000000) to seamlessly blend the edges of the frames.
 
-* **Frames 0–20:** Keyboard fully assembled, centered, stable.
+UI Aesthetic: High-tech, mysterious, premium glassmorphism. Text overlays should feel like classified HUD elements or sleek editorial typography.
 
-* **Frames 21–55:** Keyboard **subtly expands outward** (precision widening / spacing cues), still mostly assembled.
+Responsiveness: The canvas must use a cover or contain calculation algorithm on resize so the trident is always centered and visible across all devices.
 
-* **Frames 56–85:** Keyboard **opens into layers** (keycaps/switches/plate/PCB/case visible), all aligned, clean separations.
+IMPLEMENTATION DETAILS & SCENE MAPPING:
 
-* **Frames 86–119:** Layers glide back together and keyboard returns fully assembled.
+1) The Pinned Hero Architecture
 
-Motion feels **magnetic, engineered, controlled**, with gentle easing. No jitter. No dramatic spins. Keep camera angle consistent across frames. Keep fog/cloud background consistent and soft.
+Create a component TridentHero.jsx.
 
----
+Set up a massive scrolling container (e.g., h-[400vh]).
 
-# **GOOGLE ANTIGRAVITY – MASTER WEBSITE PROMPT (Scrollytelling)**
+Use GSAP ScrollTrigger to pin the canvas and text overlay container to the viewport while the user scrolls through the 400vh space.
 
-**ACT AS:**  
- A world-class Creative Developer (Awwwards-level) specializing in Next.js, Framer Motion, and high-performance scrollytelling.
+Below this hero component, create a standard div (e.g., <section className="h-screen bg-black text-white">Other Website Content</section>) to prove the unpinning works.
 
----
+2) Canvas Sequence Player (GSAP + Canvas)
 
-## **THE TASK**
+Load a sequence of 192 images (Frames 1 to 192). Assume a naming convention like /frames/trident_%03d.webp.
 
-Build a high-end “Scrollytelling” landing page for a fictional keyboard brand called **“WpDev”**.
+Implement a robust preloader. Show a sleek, glowing loading state until a critical mass of frames is cached.
 
-The core mechanic is a **scroll-linked animation** that plays an image sequence of the **WpDev keyboard expanding and opening into layers**, then **closing/reassembling** as the user reaches the end of the scroll.
+Map the GSAP ScrollTrigger progress (0 to 1) directly to the frame index. Draw using requestAnimationFrame to ensure zero jank. Avoid redundant repaints.
 
----
+3) The Story Beats (Placeholder Overlays)
+Sync these UI overlays to the GSAP timeline progress:
 
-## **TECH STACK**
+Scene 1: The Surface (Frames 1–60) * Visuals: Sunrays piercing the water.
 
-* Framework: **Next.js 14 (App Router)**
+UI: Center-aligned glassmorphism card. [PLACEHOLDER TITLE 1] / [PLACEHOLDER SUBTEXT 1].
 
-* Styling: **Tailwind CSS**
+Scene 2: The Descent (Frames 61–120)
 
-* Animation: **Framer Motion**
+Visuals: The Trident dropping through the water.
 
-* Rendering: **HTML5 Canvas** (for performance)
+UI: Left or right-aligned sleek text revealing the project context. [PLACEHOLDER TITLE 2] / [PLACEHOLDER SUBTEXT 2].
 
----
+Scene 3: The Abyss & The Funnel (Frames 121–192)
 
-## **VISUAL DIRECTION (Fog / Editorial Light Theme)**
+Visuals: The Trident rests in the dark abyss.
 
-* **Seamless Blending:** The website background MUST match the **fog/mist background** of the image sequence exactly so the edges of frames are invisible.
+UI: [PLACEHOLDER FINAL CTA].
 
-* **Background Color:** Use an eyedropped fog color (example: `#ECECEC` / `#E6E6E6`). The exact value should match the frames.
+INTERACTION: At this exact scroll threshold, initialize/unpause a Matter.js simulation over the canvas. "Intercepted emails" (represented as small glassmorphic rectangles or icons) should drop from the top of the screen and bounce into a physics-based visual funnel at the bottom of the viewport.
 
-* **Typography:** Inter or San Francisco. Minimal, tracking-tight.
+4) Performance & Polish Requirements:
 
-* **Text Color:** Because the page is light:
+Handle devicePixelRatio for sharp canvas rendering on retina screens.
 
-  * Headings: `text-black/90`
+Kill and rebuild GSAP ScrollTriggers gracefully on window resize.
 
-  * Body: `text-black/60`
+Ensure the Matter.js <canvas> or DOM elements sit cleanly on a higher z-index than the video frame <canvas>, with pointer events correctly managed.
 
-* **Aesthetic:** Premium editorial hardware. Clean, quiet, high-end. No noisy gradients. No unnecessary UI clutter.
-
----
-
-## **IMPLEMENTATION DETAILS**
-
-### **1\) The Sticky Canvas**
-
-* Create a component: `components/KeyboardScroll.tsx`
-
-* Outer container: `h-[400vh]` to create a long scroll.
-
-* Inside: a `<canvas>` that is:
-
-  * `sticky top-0 h-screen w-full`
-
-  * perfectly centered
-
-* Canvas should render frames sharply (handle devicePixelRatio).
-
----
-
-### **2\) Image Sequence Loading**
-
-* Load a sequence of **120 images** (0 → 119\) exported from `ezgif-split`.
-
-* Naming convention: `frame_[i]_delay-0.04s.webp`
-
-* Preload all images before playing to avoid flicker.
-
-* Show a loading spinner/progress indicator until enough frames are ready (ideally all frames).
-
----
-
-### **3\) Scroll → Frame Mapping (Correct \+ Smooth)**
-
-* Use `useScroll` from Framer Motion to map scroll progress (0 → 1\) to frame index (0 → 119).
-
-* On scroll:
-
-  * compute current frame index
-
-  * draw the image to canvas using `requestAnimationFrame`
-
-* Clamp frame index and avoid redundant draws to reduce jank.
-
-**Canvas draw behavior:**
-
-* Use a “contain” fit so the keyboard stays fully visible across screen sizes.
-
-* Keep consistent positioning so the keyboard doesn’t jump between frames.
-
-* Recalculate canvas size on resize.
-
----
-
-### **4\) Story Text Overlays (Timed Fade In/Out)**
-
-Overlay text sections that fade in/out as the keyboard expands/opens.
-
-Use these exact beats:
-
-* **0% Scroll (Centered):**  
-   **“WpDev Keyboard.”**  
-   subtext: “Engineered clarity.”
-
-* **25% Scroll (Left aligned):**  
-   **“Built for Precision.”**  
-   subtext: “Every detail, measured.”
-
-* **60% Scroll (Right aligned):**  
-   **“Layered Engineering.”**  
-   subtext: “See what’s inside.”
-
-* **90% Scroll (Centered CTA):**  
-   **“Assembled. Ready.”**  
-   subtext: “Scroll back to replay.”
-
-Text styling rules:
-
-* Keep type large, minimal, and spaced.
-
-* Use subtle fade \+ slight translate (like `y: 10px → 0px`).
-
-* Never block the keyboard center; keep overlays out of the main product area.
-
----
-
-### **5\) Polish Requirements**
-
-* Loading state: centered spinner \+ “Loading WpDev sequence…” (subtle).
-
-* Smoothness:
-
-  * avoid stutter
-
-  * avoid flashing backgrounds
-
-  * avoid layout shift
-
-* Mobile:
-
-  * Canvas should scale and keep keyboard fully visible (contain fit).
-
-  * Text overlays should reposition gracefully (no overlap).
-
----
-
-## **OUTPUT**
-
-Generate the full code for:
-
-* `app/page.tsx`
-
-* `components/KeyboardScroll.tsx`
-
-* `app/globals.css`
-
-**Use nano banana** to generate any UI components if needed, but keep the UI minimal.
-
----
-
+OUTPUT:
+Generate the React 19 code for TridentHero.jsx (including the GSAP mapping, Canvas rendering, and Matter.js integration) and any necessary CSS/utility files. Ensure the code is modular, heavily commented, and ready to drop into a Vite environment.
