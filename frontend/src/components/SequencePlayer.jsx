@@ -25,16 +25,16 @@ const SequencePlayer = forwardRef(function SequencePlayer({ frames, bgColor = '#
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, cw, ch);
 
-    // Force the image to over-fill the screen horizontally to crop the bottom (width-based scaling)
-    // Multiplying by 1.05 zooms the image in an extra 5%
-    const scale = (cw / iw);
+    // 1. Force the image to cover the entire screen, then zoom in an EXTRA 8%
+    const scale = Math.max(cw / iw, ch / ih) * 1.08;
     const sw = iw * scale;
     const sh = ih * scale;
 
-    // Center it horizontally
+    // 2. Center it left/right
     const sx = (cw - sw) / 2;
-    // Push the image down slightly so the extra 5% falls off the bottom edge, hiding the watermark
-    const sy = ((ch - sh) / 2) - 20;
+    // 3. Anchor the top of the image to the top of the screen.
+    // This forces the entire extra 8% height to fall exclusively off the BOTTOM edge, hiding the Veo logo.
+    const sy = 0;
 
     ctx.drawImage(img, sx, sy, sw, sh);
   }, [frames, bgColor]);
