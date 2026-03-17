@@ -15,6 +15,7 @@ import config
 from ingest.imap_adapter import parse_email_bytes
 from ingest.imap_processor import IMAPProcessor
 
+# Env-var fallbacks (used when no stored credentials exist)
 IMAP_HOST = os.environ.get("IMAP_HOST", "imap.gmail.com")
 IMAP_USER = os.environ.get("IMAP_USER")
 IMAP_PASSWORD = os.environ.get("IMAP_PASSWORD")
@@ -22,6 +23,9 @@ POLL_INTERVAL = int(os.environ.get("IMAP_POLL_INTERVAL", "12"))
 IMAP_MARK_SEEN = str(os.environ.get("IMAP_MARK_SEEN", "false")).lower() in ("1", "true", "yes")
 TRIDENT_URL = os.environ.get("TRIDENT_URL", "http://127.0.0.1:8000/detect")
 ALERTS_URL = os.environ.get("ALERTS_URL", "http://127.0.0.1:8000/alerts")
+
+# Owner ID for token store lookups
+OWNER_ID = os.environ.get("IMAP_OWNER_ID", "default")
 
 def maybe_toast(title: str, msg: str):
     try:
@@ -53,7 +57,51 @@ def mark_seen(imap: imaplib.IMAP4_SSL, uid: bytes):
         imap.uid('STORE', uid, '+FLAGS', '\\Seen')
 
 def connect_imap() -> imaplib.IMAP4_SSL:
-    """Create a fresh authenticated IMAP connection."""
+    """
+    Create a fresh authenticated IMAP connection.
+
+    Priority:
+    1. Token store (XOAUTH2 for Google, basic for app-password)
+    2. Environment variables (legacy basic auth fallback)
+    """
+    # --- Try token store first ---
+    try:
+        from core.token_store import TokenStore
+        store = TokenStore()
+        creds = store.get_credentials(OWNER_ID)
+    except Exception:
+        creds = None
+
+    if creds is not None:
+        host = creds.get("meta", {}).get("host", "imap.gmail.com")
+        port = creds.get("meta", {}).get("port", 993)
+        email_addr = creds["email"]
+        imap = imaplib.IMAP4_SSL(host, port)
+
+        if creds["provider"] == "google":
+            # XOAUTH2 authentication
+            from modules.gmail_xoauth2 import get_access_token, build_xoauth2_string
+            access_token = get_access_token(OWNER_ID, store)
+            if not access_token:
+                raise RuntimeError(
+                    "Failed to refresh Google access token. "
+                    "Please reconnect your mailbox via the UI."
+                )
+            xoauth = build_xoauth2_string(email_addr, access_token)
+            imap.authenticate("XOAUTH2", lambda x: xoauth)
+            print(f"[poller] XOAUTH2 auth success for {email_addr}", flush=True)
+        else:
+            # Basic auth using stored app password
+            imap.login(email_addr, creds["secret"])
+            print(f"[poller] basic auth success for {email_addr}", flush=True)
+        return imap
+
+    # --- Fallback to environment variables ---
+    if not IMAP_USER or not IMAP_PASSWORD:
+        raise RuntimeError(
+            "No stored credentials and IMAP_USER/IMAP_PASSWORD env vars not set. "
+            "Please connect your mailbox via the UI or set environment variables."
+        )
     imap = imaplib.IMAP4_SSL(IMAP_HOST)
     imap.login(IMAP_USER, IMAP_PASSWORD)
     return imap
@@ -64,9 +112,8 @@ def log(msg: str):
     print(f"[poller] {msg}", flush=True)
 
 def run():
-    if not IMAP_USER or not IMAP_PASSWORD:
-        log("Please set IMAP_USER and IMAP_PASSWORD environment variables.")
-        return
+    # Note: connect_imap() handles credential resolution (token store → env vars)
+    # so we no longer require IMAP_USER/IMAP_PASSWORD env vars to be set.
 
     imap_processor = IMAPProcessor(config.IMAP_PROCESSOR_FILE)
     imap: Optional[imaplib.IMAP4_SSL] = None

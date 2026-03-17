@@ -2,6 +2,8 @@
 TRIDENT FastAPI Routes
 """
 import asyncio
+import base64
+import imaplib
 import json
 import logging
 import os
@@ -42,11 +44,23 @@ ENV_ALLOWLIST = {
     "TRIDENT_URL",
     "ALERTS_URL",
     "PYTHONUNBUFFERED",
+    "TOKEN_MASTER_KEY",
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET",
+    "GOOGLE_REDIRECT_URI",
 }
 
 
 class PollerStart(BaseModel):
     env_overrides: Optional[Dict[str, str]] = None
+
+
+class BasicConnect(BaseModel):
+    owner_id: str = "default"
+    provider: str = "basic"
+    email: str
+    host: str = "imap.gmail.com"
+    password: str
 
 
 def _broadcast(payload: Dict):
@@ -140,6 +154,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount Google OAuth router
+try:
+    from api.auth_google import router as auth_google_router
+    app.include_router(auth_google_router)
+except Exception as _auth_err:
+    logging.getLogger(__name__).warning("Could not mount auth_google router: %s", _auth_err)
 
 # Initialise TRIDENT (singleton)
 _trident: Optional[TRIDENT] = None
@@ -394,3 +415,94 @@ async def campaign_status() -> Dict:
         return trident.graph.correlate()
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+# ---------------------------------------------------------------------------
+# Mailbox connect / disconnect / test endpoints
+# ---------------------------------------------------------------------------
+
+def _get_token_store():
+    from core.token_store import TokenStore
+    key = os.environ.get("TOKEN_MASTER_KEY", "").strip()
+    return TokenStore(master_key=key if key else None)
+
+
+@app.post("/connect/basic", tags=["Mailbox"])
+async def connect_basic(payload: BasicConnect) -> Dict:
+    """Store app-password credentials (encrypted) for an owner."""
+    try:
+        store = _get_token_store()
+        store.save_credentials(
+            owner_id=payload.owner_id,
+            provider="basic",
+            email=payload.email,
+            secret=payload.password,
+            meta={"host": payload.host, "port": 993},
+        )
+        return {"status": "ok", "owner_id": payload.owner_id, "email": payload.email}
+    except Exception as exc:
+        logger.exception("Failed to store basic credentials")
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/auth/disconnect", tags=["Mailbox"])
+async def auth_disconnect(owner_id: str = "default") -> Dict:
+    """Delete stored credentials/tokens for an owner."""
+    try:
+        store = _get_token_store()
+        deleted = store.delete_credentials(owner_id)
+        return {"status": "ok", "deleted": deleted}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/poller/connect-test", tags=["Mailbox"])
+async def poller_connect_test(owner_id: str = "default") -> Dict:
+    """
+    Attempt an IMAP connection using stored credentials and return
+    success/failure with a sample INBOX message count.
+    """
+    try:
+        store = _get_token_store()
+        creds = store.get_credentials(owner_id)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Token store error: {exc}")
+
+    if creds is None:
+        raise HTTPException(status_code=404, detail="No stored credentials for this owner")
+
+    host = creds.get("meta", {}).get("host", "imap.gmail.com")
+    port = creds.get("meta", {}).get("port", 993)
+    email_addr = creds["email"]
+
+    try:
+        M = imaplib.IMAP4_SSL(host, port)
+
+        if creds["provider"] == "google":
+            # Use XOAUTH2
+            from modules.gmail_xoauth2 import get_access_token, build_xoauth2_string
+            access_token = get_access_token(owner_id, store)
+            if not access_token:
+                return {"success": False, "message": "Failed to obtain access token. Token may be revoked."}
+            xoauth = build_xoauth2_string(email_addr, access_token)
+            M.authenticate("XOAUTH2", lambda x: xoauth)
+        else:
+            # Basic auth
+            M.login(email_addr, creds["secret"])
+
+        typ, data = M.select("INBOX", readonly=True)
+        msg_count = int(data[0]) if typ == "OK" else 0
+        M.logout()
+
+        return {
+            "success": True,
+            "message": f"Connected to {host} as {email_addr}",
+            "inbox_count": msg_count,
+            "provider": creds["provider"],
+        }
+    except Exception as exc:
+        return {
+            "success": False,
+            "message": f"Connection failed: {exc}",
+            "provider": creds["provider"],
+        }

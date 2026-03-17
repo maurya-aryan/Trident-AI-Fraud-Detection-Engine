@@ -1,4 +1,5 @@
 import InteractiveTerminal from './InteractiveTerminal';
+import ConnectMailbox from './ConnectMailbox';
 
 export default function TerminalSection() {
   return (
@@ -11,8 +12,11 @@ export default function TerminalSection() {
           Interact with the live TRIDENT engine. Execute analysis to see multi-modal signals processed in real-time.
         </p>
       </div>
-      
-      <InteractiveTerminal />
+
+      <div className="w-full max-w-4xl">
+        <ConnectMailbox />
+        <InteractiveTerminal />
+      </div>
     </section>
   )
 }

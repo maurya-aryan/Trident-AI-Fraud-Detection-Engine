@@ -32,3 +32,8 @@ Thumbs.db
 .env
 *.env
 .aider*
+
+# Token store (encrypted credentials)
+data/tokens.json
+client_secret*.json
+node_modules

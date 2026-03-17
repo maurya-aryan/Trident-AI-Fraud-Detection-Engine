@@ -1,8 +1,21 @@
-"""
-TRIDENT Configuration
-"""
 import os
 from pathlib import Path
+
+# Manual .env loader (avoids needing python-dotenv dependency)
+def _load_env():
+    env_path = Path(__file__).resolve().parent / ".env"
+    if env_path.exists():
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if "=" in line:
+                    key, val = line.split("=", 1)
+                    os.environ[key.strip()] = val.strip()
+        print(f"INFO: Loaded environment from .env")
+
+_load_env()
 
 # Base paths
 BASE_DIR = Path(__file__).parent
