@@ -1,0 +1,27 @@
+[
+  {
+    "icon": "🧠",
+    "title": "AI Text Detection",
+    "description": "Transformer-based classifier identifies AI-generated phishing content with deep linguistic analysis."
+  },
+  {
+    "icon": "🎣",
+    "title": "Email Phishing Detector",
+    "description": "Multi-signal analysis of sender reputation, urgency markers, and social engineering patterns."
+  },
+  {
+    "icon": "🔗",
+    "title": "Malicious URL Detection",
+    "description": "Real-time URL scanning with domain reputation, entropy analysis, and redirect chain tracing."
+  },
+  {
+    "icon": "🛡️",
+    "title": "Fusion Risk Engine",
+    "description": "Weighted ensemble model fuses all module scores into a unified threat probability with SHAP explanations."
+  },
+  {
+    "icon": "🕸️",
+    "title": "Campaign Correlation",
+    "description": "Graph-based temporal analysis links related signals to uncover coordinated multi-vector attack campaigns."
+  }
+]

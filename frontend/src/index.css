@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: #000000;
+  --color-accent: #f14f58;
+}
+
+@layer base {
+  body {
+    @apply bg-black text-white selection:bg-red-600/30 selection:text-white font-sans antialiased;
+    margin: 0;
+    overflow-x: hidden;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl transition-all duration-500 hover:border-red-600/50;
+  }
+  
+  .text-glow {
+    text-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+  }
+
+  .vignette {
+    background: radial-gradient(circle, transparent 40%, black 100%);
+    pointer-events: none;
+    @apply fixed inset-0 z-[5];
+  }
+}
+
+/* Hide scrollbar but keep functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
