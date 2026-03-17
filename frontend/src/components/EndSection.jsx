@@ -14,23 +14,9 @@ function EndSection() {
   const images = useRef([]);
 
   useEffect(() => {
-    // Preload images
     const currentFrame = index => `/footer-sequence/ezgif-frame-${(index + 1).toString().padStart(3, '0')}.jpg`;
-    
-    let loadedCount = 0;
-    for (let i = 0; i < frameCount; i++) {
-        const img = new Image();
-        img.src = currentFrame(i);
-        images.current.push(img);
-        img.onload = () => {
-            loadedCount++;
-            if (loadedCount === 1) {
-                renderFrame(0);
-            }
-        };
-    }
-
     const playhead = { frame: 0 };
+    let tl;
 
     const renderFrame = (index) => {
       const canvas = canvasRef.current;
@@ -67,48 +53,68 @@ function EndSection() {
          renderFrame(Math.round(playhead.frame));
       }
     };
-    
+
     window.addEventListener('resize', handleResize);
     handleResize();
 
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: 'top top',
-        end: '+=400%', // Scroll for 4 screens for smooth scrubbing
-        pin: true,
-        scrub: 0.5,
-      }
-    });
+    const createTimeline = () => {
+      tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: 'top top',
+          end: '+=400%', // Scroll for 4 screens for smooth scrubbing
+          pin: true,
+          scrub: 0.5,
+        }
+      });
 
-    // 1. Fade out original content quickly (first 15% of scroll)
-    tl.to(originalContentRef.current, {
-        opacity: 0,
-        y: -50,
-        duration: 0.15,
-        ease: 'power2.inOut'
-    }, 0);
+      // 1. Fade out original content quickly (first 15% of scroll)
+      tl.to(originalContentRef.current, {
+          opacity: 0,
+          y: -50,
+          duration: 0.15,
+          ease: 'power2.inOut'
+      }, 0);
 
-    // 2. Play the frames (104 total), taking the entire scroll timeline
-    tl.to(playhead, {
-      frame: frameCount - 1,
-      snap: 'frame',
-      ease: 'none',
-      onUpdate: () => renderFrame(Math.round(playhead.frame)),
-      duration: 1
-    }, 0);
+      // 2. Play the frames (104 total), taking the entire scroll timeline
+      tl.to(playhead, {
+        frame: frameCount - 1,
+        snap: 'frame',
+        ease: 'none',
+        onUpdate: () => renderFrame(Math.round(playhead.frame)),
+        duration: 1
+      }, 0);
 
-    // 3. Fade in the GitHub content near the end (last 25% of scroll)
-    tl.fromTo(githubContentRef.current, 
-      { opacity: 0, y: 50, scale: 0.95 }, 
-      { opacity: 1, y: 0, scale: 1, duration: 0.25, ease: 'power2.out' }, 
-      0.75
-    );
+      // 3. Fade in the GitHub content near the end (last 25% of scroll)
+      tl.fromTo(githubContentRef.current, 
+        { opacity: 0, y: 50, scale: 0.95 }, 
+        { opacity: 1, y: 0, scale: 1, duration: 0.25, ease: 'power2.out' }, 
+        0.75
+      );
+    };
+
+    // Preload images
+    let loadedCount = 0;
+    images.current = []; // Clear array
+    for (let i = 0; i < frameCount; i++) {
+        const img = new Image();
+        img.src = currentFrame(i);
+        images.current.push(img);
+        img.onload = () => {
+            loadedCount++;
+            if (i === 0) {
+                renderFrame(0);
+            }
+            if (loadedCount === frameCount) {
+                createTimeline();
+            }
+        };
+    }
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      if (tl.scrollTrigger) tl.scrollTrigger.kill();
-      tl.kill();
+      if (tl && tl.scrollTrigger) tl.scrollTrigger.kill();
+      if (tl) tl.kill();
     };
   }, []);
 

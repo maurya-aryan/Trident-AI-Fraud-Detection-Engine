@@ -404,7 +404,7 @@ export default function HeroSection() {
           {features.map((feature, i) => (
             <div
               key={i}
-              className="feature-card opacity-0 scale-90 p-8 border border-blue-400/10 bg-blue-950/20 backdrop-blur-xl rounded-2xl flex flex-col justify-between group hover:border-blue-400/40 transition-colors duration-500 pointer-events-auto cursor-pointer"
+              className="feature-card opacity-0 scale-90 p-8 border border-blue-400/10 bg-blue-950/1 backdrop-blur-sm rounded-2xl flex flex-col justify-between group hover:border-blue-400/40 transition-colors duration-500 pointer-events-auto cursor-pointer"
             >
               <div className="mb-4 text-xs font-mono text-blue-300/50 uppercase tracking-widest flex justify-between items-center">
                 <span>Module {String(i + 1).padStart(2, '0')}</span>
