@@ -936,7 +936,8 @@ def gauge_fig(score, band, height=200):
     color = RISK_COLORS.get(band, "#888888")
     fig = go.Figure(go.Indicator(
         mode="gauge+number", value=score,
-        number={"font":{"size":40,"color":color,"family":"Space Grotesk","weight":"bold"},"suffix":""},
+        # Plotly's indicator font does not support a "weight" property; use family+size instead
+        number={"font":{"size":40,"color":color,"family":"Space Grotesk"},"suffix":""},
         gauge={
             "axis":{"range":[0,100],"tickwidth":0,"tickcolor":"rgba(0,0,0,0)","showticklabels": False},
             "bar":{"color":color,"thickness":0.05},
@@ -1208,6 +1209,18 @@ with tab_alerts:
     # Fetch alerts for the list view (detail view is handled above via st.stop())
     all_alerts = fetch_alerts(50)
 
+    # Partition alerts into high (MEDIUM/HIGH/CRITICAL) and low buckets while
+    # keeping the original index for deep-linking to the detail page.
+    high_bands = {"MEDIUM", "HIGH", "CRITICAL"}
+    high_alerts = []
+    low_alerts  = []
+    for idx, entry in enumerate(all_alerts):
+        band = (entry.get("alert", {}).get("risk_band") or "LOW").upper()
+        if band in high_bands:
+            high_alerts.append((idx, entry))
+        else:
+            low_alerts.append((idx, entry))
+
     st.markdown("""
     <div style="text-align:center;padding:20px 0 32px">
       <div style="font-size:1.9rem;font-weight:700;color:var(--text-main);margin-bottom:10px;font-family:var(--font-display);letter-spacing:2px;">Live Alerts Dashboard</div>
@@ -1224,61 +1237,75 @@ with tab_alerts:
         </div>
         """, unsafe_allow_html=True)
     else:
-        st.markdown(f"""
-        <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:20px;padding:0 8px;font-family:var(--font-ui);">
-          Showing <b style="color:var(--text-accent);font-weight:700;">{len(all_alerts)}</b> most recent alerts · Click any alert to view detailed analysis
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Display alerts as clickable cards
-        for idx, entry in enumerate(all_alerts):
-            rec = entry.get("alert", {})
-            ts = entry.get("received_at", "")
-            subj = rec.get("subject") or "(no subject)"
-            sender = rec.get("sender") or "(unknown)"
-            band = rec.get("risk_band") or "LOW"
-            score = rec.get("risk_score") or 0
-
-            color = _BAND_COLOR.get(band, "#888")
-            bg = _BAND_BG.get(band, "rgba(100,100,100,0.05)")
-            icon = _BAND_ICON.get(band, "❓")
-
-            # Create container with card and button side by side
-            col1, col2 = st.columns([7, 1])
-
-            with col1:
-                card_html = f"""
-                <div style="
-                    background:{bg};
-                    border:1px solid {color}33;
-                    border-radius:12px 0 0 12px;
-                    padding:16px 20px;
-                    ">
-                  <div style="display:flex;align-items:center;gap:16px;">
-                    <div style="font-size:2rem;line-height:1">{icon}</div>
-                    <div style="flex:1;">
-                      <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
-                        <span style="background:{color}22;color:{color};padding:4px 12px;border-radius:6px;font-size:0.7rem;font-weight:700;letter-spacing:0.5px">{band}</span>
-                        <span style="color:{color};font-size:1.1rem;font-weight:700">{score:.0f}/100</span>
-                        <span style="color:#334155;font-size:1.2rem">·</span>
-                        <span style="color:#e2e8f0;font-size:0.95rem;font-weight:600">{subj}</span>
-                      </div>
-                      <div style="font-size:0.8rem;color:#64748b;">
-                        <span style="color:#94a3b8">From:</span> {sender} &nbsp;·&nbsp; <span style="color:#94a3b8">At:</span> {ts}
-                      </div>
-                    </div>
-                  </div>
+                st.markdown(f"""
+                <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:20px;padding:0 8px;font-family:var(--font-ui);">
+                    Showing <b style="color:var(--text-accent);font-weight:700;">{len(all_alerts)}</b> most recent alerts · Click any alert to view detailed analysis
                 </div>
-                """
-                st.markdown(card_html, unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
 
-            with col2:
-                st.markdown("<div style='height:25px'></div>", unsafe_allow_html=True)
-                if st.button("▶ View", key=f"alert_btn_{idx}", type="primary", use_container_width=True):
-                    st.query_params["alert_id"] = str(idx)
-                    st.rerun()
+                def render_alert_cards(items, title, empty_msg):
+                        st.markdown(f"""
+                        <div style="font-size:0.95rem;font-weight:700;color:var(--text-main);margin:14px 0 10px;">
+                            {title} <span style='color:var(--text-muted);font-weight:500;font-size:0.85rem'>({len(items)})</span>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        if not items:
+                                st.markdown(f"""
+                                <div class="glass-card-wrapper" style="padding:22px;text-align:center;">
+                                    <div style="color:var(--text-faint);font-size:0.9rem;">{empty_msg}</div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                                return
+                        for idx, entry in items:
+                                rec = entry.get("alert", {})
+                                ts = entry.get("received_at", "")
+                                subj = rec.get("subject") or "(no subject)"
+                                sender = rec.get("sender") or "(unknown)"
+                                band = rec.get("risk_band") or "LOW"
+                                score = rec.get("risk_score") or 0
 
-            st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+                                color = _BAND_COLOR.get(band, "#888")
+                                bg = _BAND_BG.get(band, "rgba(100,100,100,0.05)")
+                                icon = _BAND_ICON.get(band, "❓")
+
+                                col1, col2 = st.columns([7, 1])
+
+                                with col1:
+                                        card_html = f"""
+                                        <div style="
+                                                background:{bg};
+                                                border:1px solid {color}33;
+                                                border-radius:12px 0 0 12px;
+                                                padding:16px 20px;
+                                                ">
+                                            <div style="display:flex;align-items:center;gap:16px;">
+                                                <div style="font-size:2rem;line-height:1">{icon}</div>
+                                                <div style="flex:1;">
+                                                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+                                                        <span style="background:{color}22;color:{color};padding:4px 12px;border-radius:6px;font-size:0.7rem;font-weight:700;letter-spacing:0.5px">{band}</span>
+                                                        <span style="color:{color};font-size:1.1rem;font-weight:700">{score:.0f}/100</span>
+                                                        <span style="color:#334155;font-size:1.2rem">·</span>
+                                                        <span style="color:#e2e8f0;font-size:0.95rem;font-weight:600">{subj}</span>
+                                                    </div>
+                                                    <div style="font-size:0.8rem;color:#64748b;">
+                                                        <span style="color:#94a3b8">From:</span> {sender} &nbsp;·&nbsp; <span style="color:#94a3b8">At:</span> {ts}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        """
+                                        st.markdown(card_html, unsafe_allow_html=True)
+
+                                with col2:
+                                        st.markdown("<div style='height:25px'></div>", unsafe_allow_html=True)
+                                        if st.button("▶ View", key=f"alert_btn_{idx}", type="primary", use_container_width=True):
+                                                st.query_params["alert_id"] = str(idx)
+                                                st.rerun()
+
+                                st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+
+                render_alert_cards(high_alerts, "High / Medium Alerts", "No high-severity alerts yet.")
+                render_alert_cards(low_alerts,  "Low Alerts", "No low-severity alerts yet.")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB 2 — DEMO ATTACK

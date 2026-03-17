@@ -59,9 +59,13 @@ def connect_imap() -> imaplib.IMAP4_SSL:
     return imap
 
 
+def log(msg: str):
+    """Print immediately without buffering"""
+    print(f"[poller] {msg}", flush=True)
+
 def run():
     if not IMAP_USER or not IMAP_PASSWORD:
-        print("Please set IMAP_USER and IMAP_PASSWORD environment variables.")
+        log("Please set IMAP_USER and IMAP_PASSWORD environment variables.")
         return
 
     imap_processor = IMAPProcessor(config.IMAP_PROCESSOR_FILE)
@@ -71,10 +75,14 @@ def run():
         # --- (Re)connect if we have no live connection ---
         if imap is None:
             try:
-                print(f"[poller] Connecting to IMAP {IMAP_HOST} as {IMAP_USER}")
+                log(f"Connecting to IMAP {IMAP_HOST} as {IMAP_USER}")
                 imap = connect_imap()
+                log(f"Success! Connected to {IMAP_HOST}")
             except Exception as exc:
-                print(f"[poller] Connection failed: {exc}. Retrying in {POLL_INTERVAL}s …")
+                import traceback
+                log(f"Connection failed: {exc}")
+                traceback.print_exc(file=sys.stdout)
+                log(f"Retrying in {POLL_INTERVAL}s …")
                 time.sleep(POLL_INTERVAL)
                 continue
 
@@ -84,16 +92,20 @@ def run():
             # last poll.  Without this, SEARCH UNSEEN only sees messages
             # present when the mailbox was first selected.
             imap.select("INBOX")
+            log("Checking for UNSEEN messages...")
 
             typ, data = imap.search(None, 'UNSEEN')
             if typ != 'OK':
-                print("[poller] search error", typ)
+                log(f"search error {typ}")
                 time.sleep(POLL_INTERVAL)
                 continue
 
             uids = data[0].split() if data and data[0] else []
             if uids:
-                print(f"[poller] found {len(uids)} new messages")
+                log(f"found {len(uids)} new messages")
+            else:
+                log("No new messages found. Waiting...")
+                
             for uid in uids:
                 try:
                     typ, msg_data = imap.fetch(uid, '(RFC822)')
@@ -102,7 +114,7 @@ def run():
                     raw = msg_data[0][1]
                     signal = imap_processor.process_email(uid, raw)
                     if signal is None:
-                        print(f"[poller] message already processed: {uid}")
+                        log(f"message already processed: {uid}")
                         continue
 
                     # Build FraudSignal-compatible payload
@@ -114,7 +126,7 @@ def run():
                         "metadata": signal.metadata,
                     }
 
-                    print(f"[poller] posting message from {signal.sender} subject={signal.subject}")
+                    log(f"posting message from {signal.sender} subject={signal.subject}")
                     result = post_detect(payload)
                     if result:
                         band = result.get("risk_band")
@@ -130,7 +142,7 @@ def run():
                             "risk_score": score,
                             "trident_result": result,
                         }
-                        print(f"[poller] alert queued: {band} score={score:.1f} — {signal.subject}")
+                        log(f"alert queued: {band} score={score:.1f} — {signal.subject}")
                         push_alert(alert)
                         # Windows toast popup only for HIGH / CRITICAL
                         if band in ("HIGH", "CRITICAL"):
@@ -140,12 +152,12 @@ def run():
                     if IMAP_MARK_SEEN:
                         mark_seen(imap, uid)
                 except Exception as exc:
-                    print("[poller] failed to process message:", exc)
+                    log(f"failed to process message: {exc}")
 
         except (imaplib.IMAP4.abort, imaplib.IMAP4.error, OSError) as exc:
             # Connection was dropped or went stale — discard it and reconnect
             # on the next iteration instead of crashing the poller.
-            print(f"[poller] IMAP connection lost ({exc}). Will reconnect …")
+            log(f"IMAP connection lost ({exc}). Will reconnect …")
             try:
                 imap.logout()
             except Exception:
