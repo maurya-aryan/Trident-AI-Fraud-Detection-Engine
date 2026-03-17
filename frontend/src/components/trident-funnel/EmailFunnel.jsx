@@ -254,23 +254,7 @@ function drawEndpoint(ctx, x, y, label, pulseStrength, palette) {
   ctx.fillStyle = rg;
   ctx.fill();
 
-  // Label box
-  const bw = ENDPOINT_BOX_W, bh = ENDPOINT_BOX_H, bx = x - bw / 2, by = y + ENDPOINT_BOX_OFFSET_Y;
-  ctx.save();
-  ctx.shadowColor = palette.shadow;
-  ctx.shadowBlur = 10;
-  roundRect(ctx, bx, by, bw, bh, 4);
-  ctx.fillStyle = `${palette.fill}0.18)`;
-  ctx.fill();
-  ctx.strokeStyle = `${palette.stroke}${0.85 + pulseStrength * 0.12})`;
-  ctx.lineWidth = 1.4;
-  ctx.stroke();
-  ctx.restore();
-  ctx.fillStyle = `${palette.text}0.96)`;
-  ctx.font = "bold 12px 'Courier New',monospace";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(label, x, by + bh / 2);
+  /* Label box drawn by HTML overlay */
 
   // Circle
   ctx.save();
@@ -416,6 +400,8 @@ export default function EmailFunnel() {
   const ballBodiesRef = useRef([]);
   const absorbEffectsRef = useRef([]);
   const endpointPulseRef = useRef({ left: 0, right: 0 });
+  const fraudCardRef = useRef(null);
+  const safeCardRef = useRef(null);
   const gmailImageRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isDocumentVisible, setIsDocumentVisible] = useState(!document.hidden);
@@ -569,6 +555,15 @@ export default function EmailFunnel() {
             startedAt: performance.now()
           });
           endpointPulseRef.current[side] = performance.now();
+          
+          // Trigger HTML Card Pulse
+          if (side === "left" && fraudCardRef.current) {
+            fraudCardRef.current.classList.add("animate-card-pulse");
+            setTimeout(() => fraudCardRef.current?.classList.remove("animate-card-pulse"), 500);
+          } else if (side === "right" && safeCardRef.current) {
+            safeCardRef.current.classList.add("animate-card-pulse");
+            setTimeout(() => safeCardRef.current?.classList.remove("animate-card-pulse"), 500);
+          }
           World.remove(engine.world, ball);
           ballBodiesRef.current = ballBodiesRef.current.filter((b) => b.id !== ball.id);
         }
@@ -745,6 +740,28 @@ export default function EmailFunnel() {
       }}
     >
 
+      {/* Custom Keyframe Animations */}
+      <style>{`
+        @keyframes card-aurora {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        .aurora-bg {
+          background: linear-gradient(-45deg, rgba(40,220,90,0.15), rgba(0,0,0,0.8), rgba(20,150,60,0.1), rgba(0,0,0,0.9));
+          background-size: 400% 400%;
+          animation: card-aurora 15s ease infinite;
+        }
+        .animate-card-pulse {
+          animation: card-pulse-frames 0.5s ease-out;
+        }
+        @keyframes card-pulse-frames {
+          0% { transform: scale(1); box-shadow: 0 0 15px currentColor; }
+          40% { transform: scale(1.05); box-shadow: 0 0 35px currentColor; border-width: 2.5px; }
+          100% { transform: scale(1); }
+        }
+      `}</style>
+
       {/* Canvas card with 3D transform */}
       <div
         style={{
@@ -756,7 +773,8 @@ export default function EmailFunnel() {
           boxShadow: "0 0 100px rgba(0,212,255,0.055), 0 20px 60px rgba(0,0,0,0.5)",
           transform: "rotateX(2deg) rotateY(-1deg)", // Subtle 3D tilt
           transformStyle: "preserve-3d",
-          transition: "transform 0.3s ease"
+          transition: "transform 0.3s ease",
+          position: "relative" // absolute positioning context for kids
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = "rotateX(0deg) rotateY(0deg) scale(1.02)";
@@ -773,6 +791,57 @@ export default function EmailFunnel() {
             height: `${CH}px`
           }}
         />
+
+        {/* Fraud Portal Card */}
+        <div
+          ref={fraudCardRef}
+          className="absolute rounded-lg border border-red-500/60 bg-black/60 shadow-[0_0_12px_rgba(255,50,50,0.3)] transition-all duration-300 hover:scale-110 hover:shadow-[0_0_25px_rgba(255,20,20,0.7)] hover:border-red-400/90 flex flex-col items-center justify-center cursor-pointer group overflow-hidden text-red-500"
+          style={{
+            left: `${LEX - ENDPOINT_BOX_W / 2}px`,
+            top: `${ENY + ENDPOINT_BOX_OFFSET_Y}px`,
+            width: `${ENDPOINT_BOX_W}px`,
+            height: `${ENDPOINT_BOX_H}px`
+          }}
+          onClick={() => navigate('/alerts/fraud')}
+        >
+          {/* Fracture Grid Overlay */}
+          <svg className="absolute inset-0 opacity-40 group-hover:opacity-70 transition-opacity" width="100%" height="100%">
+            <path 
+              d="M 5 8 L 45 22 L 85 14 L 122 36 M 35 3 L 55 40 M 92 2 L 72 40 M 15 38 L 65 18 L 105 40" 
+              stroke="#ff4444" 
+              strokeWidth="1.5" 
+              fill="none" 
+            />
+          </svg>
+          <span className="relative z-10 text-red-100 font-mono font-bold text-xs uppercase tracking-wider group-hover:translate-y-[-4px] transition-transform duration-300">
+            FRAUD
+          </span>
+          <span className="absolute bottom-1.5 text-[8px] text-red-400 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 font-sans font-medium uppercase tracking-wider">
+            → View Report
+          </span>
+        </div>
+
+        {/* Safe Portal Card */}
+        <div
+          ref={safeCardRef}
+          className="absolute rounded-lg border border-green-500/60 shadow-[0_0_12px_rgba(40,220,90,0.2)] transition-all duration-300 hover:scale-110 hover:shadow-[0_0_25px_rgba(40,220,90,0.6)] hover:border-green-400/90 flex flex-col items-center justify-center cursor-pointer group overflow-hidden aurora-bg text-green-500"
+          style={{
+            left: `${REX - ENDPOINT_BOX_W / 2}px`,
+            top: `${ENY + ENDPOINT_BOX_OFFSET_Y}px`,
+            width: `${ENDPOINT_BOX_W}px`,
+            height: `${ENDPOINT_BOX_H}px`
+          }}
+          onClick={() => navigate('/alerts/safe')}
+        >
+          {/* Smooth Aurora Effect */}
+          <div className="absolute inset-0 opacity-40 group-hover:opacity-60 transition-opacity bg-gradient-to-t from-green-600/25 via-transparent to-transparent" />
+          <span className="relative z-10 text-green-100 font-mono font-bold text-xs uppercase tracking-wider group-hover:translate-y-[-4px] transition-transform duration-300">
+            SAFE
+          </span>
+          <span className="absolute bottom-1.5 text-[8px] text-green-400 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 font-sans font-medium uppercase tracking-wider">
+            → View Report
+          </span>
+        </div>
       </div>
 
     </section>

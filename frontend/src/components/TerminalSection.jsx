@@ -1,21 +1,15 @@
+import { useRef, useState, useEffect } from 'react';
 import InteractiveTerminal from './InteractiveTerminal';
 import ParticleBackground from './ParticleBackground';
 
 export default function TerminalSection() {
   return (
-    <ParticleBackground>
-      <section className="relative w-full flex flex-col items-center justify-center px-6 py-20 bg-transparent z-10 overflow-hidden">
-        <div className="relative text-center mb-12 z-10">
-          <h2 className="text-5xl font-black tracking-tighter text-white uppercase italic mb-4">
-            Live <span className="text-blue-500">Detection</span>
-          </h2>
-          <p className="text-blue-200/60 font-mono text-sm max-w-2xl">
-            Interact with the live TRIDENT engine. Execute analysis to see multi-modal signals processed in real-time.
-          </p>
-        </div>
-
-        <InteractiveTerminal />
-      </section>
-    </ParticleBackground>
-  )
+    <div className="relative z-20 rounded-t-[24px] shadow-[0_-20px_60px_rgba(0,0,0,0.8)] mt-[-45vh] bg-[#050b18] pt-[80px]">
+      <ParticleBackground>
+        <section className="relative w-full flex flex-col items-center justify-center px-6 bg-transparent z-10">
+          <InteractiveTerminal />
+        </section>
+      </ParticleBackground>
+    </div>
+  );
 }

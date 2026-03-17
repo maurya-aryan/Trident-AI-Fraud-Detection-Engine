@@ -107,7 +107,7 @@ function EndSection() {
           trigger: containerRef.current,
           start: 'top top',
           end: 'bottom bottom',
-          scrub: 1, // Smooth scrubbing
+          scrub: 1.3, // Increased lag to slow dow smooth scrubbing momentum
         }
       });
 
@@ -126,11 +126,11 @@ function EndSection() {
       gsap.set([scene1Ref.current, scene2Ref.current], { opacity: 0, y: 30 });
       gsap.set(githubContentRef.current, { opacity: 0, y: 30, scale: 0.98 });
       gsap.set(footerRef.current, { opacity: 0, y: 20 });
-      
+
       // Scene 1: The Surface
       tl.to(scene1Ref.current, { opacity: 1, y: 0, duration: 0.1, ease: "power2.out" }, 0.05)
         .to(scene1Ref.current, { opacity: 0, y: -30, duration: 0.1, ease: "power2.in" }, 0.25);
-        
+
       // Scene 2: Deep Inspection
       tl.to(scene2Ref.current, { opacity: 1, y: 0, duration: 0.1, ease: "power2.out" }, 0.35)
         .to(scene2Ref.current, { opacity: 0, y: -30, duration: 0.1, ease: "power2.in" }, 0.55);
@@ -151,7 +151,7 @@ function EndSection() {
   }, [loading, images]);
 
   return (
-    <div ref={containerRef} className="relative w-full h-[140vh] bg-black">
+    <div ref={containerRef} className="relative w-full h-[250vh] bg-black">
       <div className="sticky top-0 w-full h-[100vh] overflow-hidden">
 
         {/* Loading overlay */}
@@ -189,7 +189,7 @@ function EndSection() {
         {/* Scene 2 Overlay */}
         <div ref={scene2Ref} className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-4 w-full max-w-4xl mx-auto pointer-events-none">
           <div className="flex flex-col items-start w-full md:pl-20">
-             <h2 className="text-4xl md:text-6xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-white tracking-widest uppercase">
+            <h2 className="text-4xl md:text-6xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-white tracking-widest uppercase">
               Deep Inspection
             </h2>
             <p className="text-xl md:text-2xl text-blue-100/60 font-mono border-l-2 border-blue-500 pl-6 text-left max-w-lg">

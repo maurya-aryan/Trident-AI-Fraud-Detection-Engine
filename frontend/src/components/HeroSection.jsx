@@ -343,7 +343,7 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <div className="relative w-full bg-black">
+    <div className="relative w-full bg-black z-10">
       {/* Container with scroll height driver */}
       <div ref={scrollRef} className="scroll-height relative h-[400vh] w-full">
 

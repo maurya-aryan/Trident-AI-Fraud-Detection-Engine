@@ -37,7 +37,7 @@ function App() {
                 <HeroSection />
               </div>
 
-              <div id="terminal">
+              <div id="terminal" className="relative z-20 w-full">
                 <TerminalSection />
               </div>
 
