@@ -14,6 +14,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import config
 from ingest.imap_adapter import parse_email_bytes
 from ingest.imap_processor import IMAPProcessor
+import core.token_store as token_store
+import base64
 
 IMAP_HOST = os.environ.get("IMAP_HOST", "imap.gmail.com")
 IMAP_USER = os.environ.get("IMAP_USER")
@@ -22,6 +24,7 @@ POLL_INTERVAL = int(os.environ.get("IMAP_POLL_INTERVAL", "12"))
 IMAP_MARK_SEEN = str(os.environ.get("IMAP_MARK_SEEN", "false")).lower() in ("1", "true", "yes")
 TRIDENT_URL = os.environ.get("TRIDENT_URL", "http://127.0.0.1:8000/detect")
 ALERTS_URL = os.environ.get("ALERTS_URL", "http://127.0.0.1:8000/alerts")
+OWNER_ID = os.environ.get("OWNER_ID", "default")
 
 def maybe_toast(title: str, msg: str):
     try:
@@ -53,10 +56,56 @@ def mark_seen(imap: imaplib.IMAP4_SSL, uid: bytes):
         imap.uid('STORE', uid, '+FLAGS', '\\Seen')
 
 def connect_imap() -> imaplib.IMAP4_SSL:
-    """Create a fresh authenticated IMAP connection."""
-    imap = imaplib.IMAP4_SSL(IMAP_HOST)
-    imap.login(IMAP_USER, IMAP_PASSWORD)
-    return imap
+    """Create a fresh authenticated IMAP connection, using stored credentials if available."""
+    creds = token_store.get_credentials(OWNER_ID)
+    
+    if creds:
+        log(f"Found stored credentials for {OWNER_ID} ({creds['provider']})")
+        if creds['provider'] == 'google':
+            # Refresh token to get access token
+            refresh_token = creds['secret']
+            client_id = creds['meta'].get('client_id')
+            client_secret = creds['meta'].get('client_secret')
+            token_uri = creds['meta'].get('token_uri', 'https://oauth2.googleapis.com/token')
+
+            if not client_id or not client_secret:
+                 log("Google client ID or secret missing in token metadata. Falling back to basic auth.")
+            else:
+                try:
+                    data = {
+                        'client_id': client_id,
+                        'client_secret': client_secret,
+                        'refresh_token': refresh_token,
+                        'grant_type': 'refresh_token',
+                    }
+                    r = requests.post(token_uri, data=data)
+                    r.raise_for_status()
+                    access_token = r.json().get('access_token')
+                    
+                    # Build XOAUTH2 string as raw bytes
+                    # imaplib.authenticate does the base64 encoding internally
+                    auth_str = f"user={creds['email']}\x01auth=Bearer {access_token}\x01\x01"
+                    
+                    imap = imaplib.IMAP4_SSL(IMAP_HOST)
+                    imap.authenticate('XOAUTH2', lambda x: auth_str.encode())
+                    return imap
+                except Exception as e:
+                    log(f"XOAUTH2 authentication failed: {e}. Falling back to basic auth or crash.")
+
+        elif creds['provider'] == 'basic':
+            host = creds['meta'].get('host', IMAP_HOST)
+            imap = imaplib.IMAP4_SSL(host)
+            imap.login(creds['email'], creds['secret'])
+            return imap
+
+    # Fallback to env vars
+    if IMAP_USER and IMAP_PASSWORD:
+         log("Using IMAP_USER and IMAP_PASSWORD from environment.")
+         imap = imaplib.IMAP4_SSL(IMAP_HOST)
+         imap.login(IMAP_USER, IMAP_PASSWORD)
+         return imap
+         
+    raise ValueError("No valid credentials found in token_store or environment variables.")
 
 
 def log(msg: str):
@@ -64,8 +113,15 @@ def log(msg: str):
     print(f"[poller] {msg}", flush=True)
 
 def run():
-    if not IMAP_USER or not IMAP_PASSWORD:
-        log("Please set IMAP_USER and IMAP_PASSWORD environment variables.")
+    # Verify we have SOME way to authenticate
+    creds = None
+    try:
+        creds = token_store.get_credentials(OWNER_ID)
+    except Exception as e:
+         log(f"Error checking token_store: {e}")
+
+    if not creds and (not IMAP_USER or not IMAP_PASSWORD):
+        log("Please set IMAP_USER and IMAP_PASSWORD environment variables OR connect mailbox via UI/API.")
         return
 
     imap_processor = IMAPProcessor(config.IMAP_PROCESSOR_FILE)

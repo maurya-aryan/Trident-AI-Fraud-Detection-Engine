@@ -21,6 +21,7 @@ from core.data_models import FraudSignal, TridentResult
 from core.trident import TRIDENT
 from datetime import datetime
 import threading
+from api.auth_google import router as auth_router
 
 # ---------------------------------------------------------------------------
 # Poller process management
@@ -140,6 +141,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth_router, prefix="/auth")
 
 # Initialise TRIDENT (singleton)
 _trident: Optional[TRIDENT] = None
