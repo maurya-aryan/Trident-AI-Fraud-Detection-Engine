@@ -21,7 +21,7 @@ function Rain({ count = 3000 }) {
         x: (Math.random() - 0.5) * 200,
         y: Math.random() * 80 + 20,
         z: (Math.random() - 0.5) * 200 - 50,
-        speed: Math.random() * 0.3 + 0.15,
+        speed: Math.random() * 0.8 + 0.15,
       });
     }
     return temp;
@@ -57,7 +57,8 @@ function Storm() {
 
   useFrame(() => {
     // Lightning flash – random bursts illuminate the scene
-    if (Math.random() < 0.003 && !lightningActive.current) {
+    // Increased probability from 0.003 to 0.015 so it happens more often
+    if (Math.random() < 0.03 && !lightningActive.current) {
       lightningActive.current = true;
 
       if (lightningLightRef.current) {
@@ -117,11 +118,11 @@ function Trident() {
   // - "handle" node: scale ~6.66x, translation (70, 158, 0)
   // - "Plane" node: scale ~66.6x, translation (74, 389, 0)
   // Actual rendered bounding box is ~750 units, NOT the raw 11 units from accessors.
-  const TRIDENT_SCALE = 0.014;
+  const TRIDENT_SCALE = 0.015;
 
   useFrame(() => {
     if (tridentRef.current) {
-      tridentRef.current.rotation.y += 0.005;
+      tridentRef.current.rotation.y += 0.05;
     }
   });
 
@@ -159,13 +160,12 @@ function ServerCity() {
 
     const gridSize = 40;
     const boxSize = 3;
-    // Obsidian blue base + warm yellow emissive for lit windows effect
+    // Pure black buildings (like inspiration) - the blue glow comes from lighting, not material
     const meshParams = {
-      color: '#0a0a1a',
-      metalness: 0.7,
-      emissive: '#ffcc44',
-      emissiveIntensity: 0.08,
-      roughness: 0.3,
+      color: '#000',
+      metalness: 0,
+      emissive: '#000',
+      roughness: 0.77,
     };
     const max = 0.009;
     const min = 0.001;
@@ -248,8 +248,8 @@ function Experience() {
       // Zoom into the city skyline
       newTl.to(cameraRef.current.position, {
         x: 0,
-        y: -70,
-        z: -10,
+        y: -75,
+        z: -40, // Moved closer into the buildings (was -10)
         duration: 0.45,
         ease: "power2.inOut"
       }, 0.35);
@@ -290,19 +290,20 @@ function Experience() {
       {/* Fog: midnight blue atmosphere */}
       <fog attach="fog" args={['#020a14', 50, 220]} />
 
-      {/* Ambient: very subtle blue-tinted fill */}
-      <ambientLight color="#112233" intensity={1.5} />
+      {/* Ambient: dark blue ambient fill */}
+      <ambientLight color="#0a0a2a" intensity={1} />
 
-      {/* Night yellow streetlight feel - lights from above the city */}
-      <spotLight color="#ffcc44" intensity={3} position={[60, -40, -100]} angle={0.6} penumbra={1} castShadow />
-      <spotLight color="#ffaa33" intensity={2} position={[-40, -50, -130]} angle={0.5} penumbra={1} />
+      {/* Blue spotlight from one side - creates the half-lit dramatic look */}
+      <spotLight color="#0044ff" intensity={3} position={[641, -462, 509]} castShadow />
 
-      {/* Cool blue moonlight from the side */}
-      <directionalLight color="#4488cc" intensity={1.5} position={[-50, 30, 20]} />
+      {/* Blue directional moonlight from the left */}
+      <directionalLight color="#2266cc" intensity={2} position={[-80, 30, 20]} />
 
-      {/* Subtle warm glow near the city center */}
-      <pointLight color="#ffcc44" intensity={8} position={[-30, -75, -120]} distance={100} decay={2} />
-      <pointLight color="#ffaa22" intensity={6} position={[30, -80, -140]} distance={80} decay={2} />
+      {/* Strong blue point light illuminating the city from above (like inspiration's #d3263a but blue) */}
+      <pointLight color="#2244aa" intensity={8.2} position={[16, -10, -168]} />
+
+      {/* Secondary blue glow from the opposite side - fainter, for depth */}
+      <pointLight color="#1133aa" intensity={4} position={[-60, -75, -120]} distance={150} decay={2} />
 
       {/* Background Shape - deep midnight blue */}
       <mesh position={[0, -50, -250]}>
