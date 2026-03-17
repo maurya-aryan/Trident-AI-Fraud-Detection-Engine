@@ -26,7 +26,7 @@ export default function Navbar() {
         {/* Center links - Hidden on small screens */}
         <div className="hidden md:flex items-center gap-8 text-xs font-medium text-white/60">
           <a href="#architecture" className="hover:text-white transition-colors">Architecture</a>
-          <a href="#pipeline" className="hover:text-white transition-colors">Detection</a>
+          <a href="#detection" className="hover:text-white transition-colors">Detection</a>
           <a href="#terminal" className="hover:text-white transition-colors">Terminal</a>
         </div>
         
