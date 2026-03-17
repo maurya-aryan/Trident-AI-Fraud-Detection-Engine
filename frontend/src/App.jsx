@@ -3,6 +3,7 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import Navbar from './components/Navbar';
+import AuthSection from './components/auth';
 import HeroSection from './components/HeroSection';
 import DetectionSection from './components/DetectionSection';
 import TerminalSection from './components/TerminalSection';
@@ -33,6 +34,8 @@ function App() {
             <Navbar />
             
             <main className="relative flex flex-col w-full">
+              <AuthSection />
+
               <div id="architecture">
                 <HeroSection />
               </div>

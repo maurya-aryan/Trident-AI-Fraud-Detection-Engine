@@ -334,7 +334,10 @@ export default function HeroSection() {
       ([entry]) => {
         setHeroVisible(entry.isIntersecting);
       },
-      { threshold: 0 }
+      // rootMargin extends detection one viewport-height below so the canvas
+      // stays alive while the AuthSection (100vh tall) is in view.
+      // IntersectionObserver only accepts px/%, not vh — use window.innerHeight.
+      { threshold: 0, rootMargin: `0px 0px ${window.innerHeight}px 0px` }
     );
 
     observer.observe(el);

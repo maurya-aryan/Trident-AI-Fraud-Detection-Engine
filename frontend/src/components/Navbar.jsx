@@ -6,7 +6,8 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
+      // Stay hidden until the user has scrolled past the AuthSection (≈100vh)
+      setScrolled(window.scrollY > window.innerHeight * 0.9);
     };
     
     window.addEventListener('scroll', handleScroll);
