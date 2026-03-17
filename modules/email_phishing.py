@@ -8,6 +8,8 @@ import re
 from typing import Dict, List, Tuple
 
 import numpy as np
+import joblib
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +124,33 @@ class EmailPhishingDetector:
     def __init__(self):
         self.model = None
         self._trained = False
-        self._train_on_synthetic()
+        # Try to load a pre-trained model saved to disk first
+        model_path = Path(__file__).resolve().parent.parent / "data" / "models" / "email_phishing_v2.pkl"
+        try:
+            if model_path.exists():
+                self.model = joblib.load(model_path)
+                self._trained = True
+                logger.info("Loaded email phishing model from %s", model_path)
+            else:
+                # Also support legacy XGBoost JSON model saved by training scripts
+                json_model = Path(__file__).resolve().parent.parent / "data" / "models" / "email_phishing_v2.json"
+                if json_model.exists():
+                    try:
+                        import xgboost as xgb
+                        model = xgb.XGBClassifier()
+                        model.load_model(str(json_model))
+                        self.model = model
+                        self._trained = True
+                        logger.info("Loaded XGBoost phishing model from %s", json_model)
+                    except Exception as exc:
+                        logger.warning("Failed to load XGBoost json model (%s): %s", json_model, exc)
+                        self._train_on_synthetic()
+                else:
+                    # Fall back to training on synthetic data for immediate availability
+                    self._train_on_synthetic()
+        except Exception as exc:
+            logger.warning("Failed to load persisted phishing model (%s). Falling back to synthetic training.", exc)
+            self._train_on_synthetic()
 
     def _train_on_synthetic(self) -> None:
         try:
@@ -156,7 +184,7 @@ class EmailPhishingDetector:
         """Re-train on custom data."""
         try:
             import xgboost as xgb
-
+            # Default training uses handcrafted features if called directly.
             X = np.array([_extract_features(e) for e in emails])
             y = np.array(labels, dtype=int)
             self.model = xgb.XGBClassifier(
