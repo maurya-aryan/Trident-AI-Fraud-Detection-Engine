@@ -1,18 +1,125 @@
 """
 TRIDENT FastAPI Routes
 """
+import asyncio
+import json
 import logging
 import os
+import subprocess
+import sys
 import tempfile
-from typing import Dict, Optional
+import threading
+from pathlib import Path
+from typing import Dict, Optional, Set
 
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.data_models import FraudSignal, TridentResult
 from core.trident import TRIDENT
 from datetime import datetime
 import threading
+from api.auth_google import router as auth_router
+
+# ---------------------------------------------------------------------------
+# Poller process management
+# ---------------------------------------------------------------------------
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+POLLER_SCRIPT = ROOT_DIR / "scripts" / "run_imap_poller.py"
+_poller_proc: Optional[subprocess.Popen] = None
+_poller_thread: Optional[threading.Thread] = None
+_stream_subscribers: Set[asyncio.Queue] = set()
+_stream_lock = threading.Lock()
+
+ENV_ALLOWLIST = {
+    "IMAP_HOST",
+    "IMAP_USER",
+    "IMAP_PASSWORD",
+    "IMAP_POLL_INTERVAL",
+    "IMAP_MARK_SEEN",
+    "TRIDENT_URL",
+    "ALERTS_URL",
+    "PYTHONUNBUFFERED",
+}
+
+
+class PollerStart(BaseModel):
+    env_overrides: Optional[Dict[str, str]] = None
+
+
+def _broadcast(payload: Dict):
+    """Send a message to all SSE subscribers."""
+    try:
+        message = json.dumps(payload)
+    except Exception:
+        return
+    with _stream_lock:
+        subs = list(_stream_subscribers)
+    for q in subs:
+        try:
+            q.put_nowait(message)
+        except Exception:
+            continue
+
+
+def _reader_loop(proc: subprocess.Popen):
+    """Read stdout/stderr lines from the poller process and broadcast."""
+    try:
+        for raw in iter(proc.stdout.readline, ""):
+            if raw is None:
+                break
+            line = raw.rstrip("\n")
+            if not line:
+                continue
+            _broadcast({"type": "line", "data": line})
+    finally:
+        code = proc.poll()
+        _broadcast({"type": "status", "data": "stopped", "exit_code": code})
+        proc.stdout and proc.stdout.close()
+
+
+def _start_poller(env_overrides: Optional[Dict[str, str]] = None):
+    global _poller_proc, _poller_thread
+    if _poller_proc and _poller_proc.poll() is None:
+        raise RuntimeError("poller already running")
+
+    if not POLLER_SCRIPT.exists():
+        raise RuntimeError(f"poller script missing: {POLLER_SCRIPT}")
+
+    env = os.environ.copy()
+    for k, v in (env_overrides or {}).items():
+        if k in ENV_ALLOWLIST:
+            env[k] = v
+
+    cmd = [sys.executable, str(POLLER_SCRIPT)]
+    _poller_proc = subprocess.Popen(
+        cmd,
+        cwd=str(ROOT_DIR),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        bufsize=1,
+        text=True,
+    )
+
+    _broadcast({"type": "status", "data": "started", "pid": _poller_proc.pid})
+    _poller_thread = threading.Thread(target=_reader_loop, args=(_poller_proc,), daemon=True)
+    _poller_thread.start()
+
+
+def _stop_poller():
+    global _poller_proc
+    proc = _poller_proc
+    if not proc or proc.poll() is not None:
+        raise RuntimeError("poller not running")
+    proc.terminate()
+    try:
+        proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+    _broadcast({"type": "status", "data": "stopped", "exit_code": proc.poll()})
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +142,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_router, prefix="/auth")
+
 # Initialise TRIDENT (singleton)
 _trident: Optional[TRIDENT] = None
 
@@ -44,6 +153,10 @@ def get_trident() -> TRIDENT:
     if _trident is None:
         _trident = TRIDENT()
     return _trident
+
+
+def _poller_running() -> bool:
+    return _poller_proc is not None and _poller_proc.poll() is None
 
 
 # ---------------------------------------------------------------------------
@@ -209,6 +322,71 @@ async def reset_campaign_graph() -> Dict:
         return {"status": "graph_reset", "message": "Campaign graph cleared."}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+# ---------------------------------------------------------------------------
+# IMAP poller control + streaming output
+# ---------------------------------------------------------------------------
+
+
+@app.post("/poller/start", tags=["Poller"])
+async def poller_start(payload: PollerStart) -> Dict:
+    """Start the IMAP poller process, inheriting env plus optional overrides."""
+    try:
+        _start_poller(payload.env_overrides)
+        return {
+            "status": "started",
+            "pid": _poller_proc.pid if _poller_proc else None,
+            "running": _poller_running(),
+        }
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+    except Exception as exc:
+        logger.exception("Failed to start poller")
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/poller/stop", tags=["Poller"])
+async def poller_stop() -> Dict:
+    """Stop the IMAP poller process if running."""
+    try:
+        _stop_poller()
+        return {"status": "stopped"}
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+    except Exception as exc:
+        logger.exception("Failed to stop poller")
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/poller/stream", tags=["Poller"])
+async def poller_stream():
+    """Server-Sent Events stream of live poller output and status."""
+
+    async def event_stream():
+        q: asyncio.Queue = asyncio.Queue()
+        # seed with current status
+        initial = {
+            "type": "status",
+            "data": "running" if _poller_running() else "stopped",
+            "pid": _poller_proc.pid if _poller_proc else None,
+        }
+        await q.put(json.dumps(initial))
+
+        with _stream_lock:
+            _stream_subscribers.add(q)
+
+        try:
+            while True:
+                msg = await q.get()
+                yield f"data: {msg}\n\n"
+        except asyncio.CancelledError:
+            pass
+        finally:
+            with _stream_lock:
+                _stream_subscribers.discard(q)
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 @app.get("/campaign-status", tags=["Detection"])

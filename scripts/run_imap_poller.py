@@ -14,6 +14,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import config
 from ingest.imap_adapter import parse_email_bytes
 from ingest.imap_processor import IMAPProcessor
+import core.token_store as token_store
+import base64
 
 IMAP_HOST = os.environ.get("IMAP_HOST", "imap.gmail.com")
 IMAP_USER = os.environ.get("IMAP_USER")
@@ -22,6 +24,7 @@ POLL_INTERVAL = int(os.environ.get("IMAP_POLL_INTERVAL", "12"))
 IMAP_MARK_SEEN = str(os.environ.get("IMAP_MARK_SEEN", "false")).lower() in ("1", "true", "yes")
 TRIDENT_URL = os.environ.get("TRIDENT_URL", "http://127.0.0.1:8000/detect")
 ALERTS_URL = os.environ.get("ALERTS_URL", "http://127.0.0.1:8000/alerts")
+OWNER_ID = os.environ.get("OWNER_ID", "default")
 
 def maybe_toast(title: str, msg: str):
     try:
@@ -53,15 +56,72 @@ def mark_seen(imap: imaplib.IMAP4_SSL, uid: bytes):
         imap.uid('STORE', uid, '+FLAGS', '\\Seen')
 
 def connect_imap() -> imaplib.IMAP4_SSL:
-    """Create a fresh authenticated IMAP connection."""
-    imap = imaplib.IMAP4_SSL(IMAP_HOST)
-    imap.login(IMAP_USER, IMAP_PASSWORD)
-    return imap
+    """Create a fresh authenticated IMAP connection, using stored credentials if available."""
+    creds = token_store.get_credentials(OWNER_ID)
+    
+    if creds:
+        log(f"Found stored credentials for {OWNER_ID} ({creds['provider']})")
+        if creds['provider'] == 'google':
+            # Refresh token to get access token
+            refresh_token = creds['secret']
+            client_id = creds['meta'].get('client_id')
+            client_secret = creds['meta'].get('client_secret')
+            token_uri = creds['meta'].get('token_uri', 'https://oauth2.googleapis.com/token')
 
+            if not client_id or not client_secret:
+                 log("Google client ID or secret missing in token metadata. Falling back to basic auth.")
+            else:
+                try:
+                    data = {
+                        'client_id': client_id,
+                        'client_secret': client_secret,
+                        'refresh_token': refresh_token,
+                        'grant_type': 'refresh_token',
+                    }
+                    r = requests.post(token_uri, data=data)
+                    r.raise_for_status()
+                    access_token = r.json().get('access_token')
+                    
+                    # Build XOAUTH2 string as raw bytes
+                    # imaplib.authenticate does the base64 encoding internally
+                    auth_str = f"user={creds['email']}\x01auth=Bearer {access_token}\x01\x01"
+                    
+                    imap = imaplib.IMAP4_SSL(IMAP_HOST)
+                    imap.authenticate('XOAUTH2', lambda x: auth_str.encode())
+                    return imap
+                except Exception as e:
+                    log(f"XOAUTH2 authentication failed: {e}. Falling back to basic auth or crash.")
+
+        elif creds['provider'] == 'basic':
+            host = creds['meta'].get('host', IMAP_HOST)
+            imap = imaplib.IMAP4_SSL(host)
+            imap.login(creds['email'], creds['secret'])
+            return imap
+
+    # Fallback to env vars
+    if IMAP_USER and IMAP_PASSWORD:
+         log("Using IMAP_USER and IMAP_PASSWORD from environment.")
+         imap = imaplib.IMAP4_SSL(IMAP_HOST)
+         imap.login(IMAP_USER, IMAP_PASSWORD)
+         return imap
+         
+    raise ValueError("No valid credentials found in token_store or environment variables.")
+
+
+def log(msg: str):
+    """Print immediately without buffering"""
+    print(f"[poller] {msg}", flush=True)
 
 def run():
-    if not IMAP_USER or not IMAP_PASSWORD:
-        print("Please set IMAP_USER and IMAP_PASSWORD environment variables.")
+    # Verify we have SOME way to authenticate
+    creds = None
+    try:
+        creds = token_store.get_credentials(OWNER_ID)
+    except Exception as e:
+         log(f"Error checking token_store: {e}")
+
+    if not creds and (not IMAP_USER or not IMAP_PASSWORD):
+        log("Please set IMAP_USER and IMAP_PASSWORD environment variables OR connect mailbox via UI/API.")
         return
 
     imap_processor = IMAPProcessor(config.IMAP_PROCESSOR_FILE)
@@ -71,10 +131,14 @@ def run():
         # --- (Re)connect if we have no live connection ---
         if imap is None:
             try:
-                print(f"[poller] Connecting to IMAP {IMAP_HOST} as {IMAP_USER}")
+                log(f"Connecting to IMAP {IMAP_HOST} as {IMAP_USER}")
                 imap = connect_imap()
+                log(f"Success! Connected to {IMAP_HOST}")
             except Exception as exc:
-                print(f"[poller] Connection failed: {exc}. Retrying in {POLL_INTERVAL}s …")
+                import traceback
+                log(f"Connection failed: {exc}")
+                traceback.print_exc(file=sys.stdout)
+                log(f"Retrying in {POLL_INTERVAL}s …")
                 time.sleep(POLL_INTERVAL)
                 continue
 
@@ -84,16 +148,20 @@ def run():
             # last poll.  Without this, SEARCH UNSEEN only sees messages
             # present when the mailbox was first selected.
             imap.select("INBOX")
+            log("Checking for UNSEEN messages...")
 
             typ, data = imap.search(None, 'UNSEEN')
             if typ != 'OK':
-                print("[poller] search error", typ)
+                log(f"search error {typ}")
                 time.sleep(POLL_INTERVAL)
                 continue
 
             uids = data[0].split() if data and data[0] else []
             if uids:
-                print(f"[poller] found {len(uids)} new messages")
+                log(f"found {len(uids)} new messages")
+            else:
+                log("No new messages found. Waiting...")
+                
             for uid in uids:
                 try:
                     typ, msg_data = imap.fetch(uid, '(RFC822)')
@@ -102,7 +170,7 @@ def run():
                     raw = msg_data[0][1]
                     signal = imap_processor.process_email(uid, raw)
                     if signal is None:
-                        print(f"[poller] message already processed: {uid}")
+                        log(f"message already processed: {uid}")
                         continue
 
                     # Build FraudSignal-compatible payload
@@ -114,7 +182,7 @@ def run():
                         "metadata": signal.metadata,
                     }
 
-                    print(f"[poller] posting message from {signal.sender} subject={signal.subject}")
+                    log(f"posting message from {signal.sender} subject={signal.subject}")
                     result = post_detect(payload)
                     if result:
                         band = result.get("risk_band")
@@ -130,7 +198,7 @@ def run():
                             "risk_score": score,
                             "trident_result": result,
                         }
-                        print(f"[poller] alert queued: {band} score={score:.1f} — {signal.subject}")
+                        log(f"alert queued: {band} score={score:.1f} — {signal.subject}")
                         push_alert(alert)
                         # Windows toast popup only for HIGH / CRITICAL
                         if band in ("HIGH", "CRITICAL"):
@@ -140,12 +208,12 @@ def run():
                     if IMAP_MARK_SEEN:
                         mark_seen(imap, uid)
                 except Exception as exc:
-                    print("[poller] failed to process message:", exc)
+                    log(f"failed to process message: {exc}")
 
         except (imaplib.IMAP4.abort, imaplib.IMAP4.error, OSError) as exc:
             # Connection was dropped or went stale — discard it and reconnect
             # on the next iteration instead of crashing the poller.
-            print(f"[poller] IMAP connection lost ({exc}). Will reconnect …")
+            log(f"IMAP connection lost ({exc}). Will reconnect …")
             try:
                 imap.logout()
             except Exception:
