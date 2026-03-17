@@ -659,17 +659,7 @@ export default function EmailFunnel() {
         perspective: "1200px" // 3D perspective
       }}
     >
-      {/* Subtle grid overlay */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          pointerEvents: "none",
-          backgroundImage:
-            "linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px)",
-          backgroundSize: "44px 44px"
-        }}
-      />
+
 
       {/* Canvas card with 3D transform */}
       <div
@@ -682,7 +672,9 @@ export default function EmailFunnel() {
           boxShadow: "0 0 100px rgba(0,212,255,0.055), 0 20px 60px rgba(0,0,0,0.5)",
           transform: "rotateX(2deg) rotateY(-1deg)", // Subtle 3D tilt
           transformStyle: "preserve-3d",
-          transition: "transform 0.3s ease"
+          transition: "transform 0.3s ease",
+          width: "100%",
+          maxWidth: `${CW}px`
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = "rotateX(0deg) rotateY(0deg) scale(1.02)";
@@ -695,8 +687,9 @@ export default function EmailFunnel() {
           ref={canvasRef}
           style={{
             display: "block",
-            width: `${CW}px`,
-            height: `${CH}px`
+            width: "100%",
+            height: "auto",
+            aspectRatio: `${CW}/${CH}`
           }}
         />
       </div>

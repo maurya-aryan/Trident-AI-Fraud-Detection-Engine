@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import logo from '../assets/TRIDENT_BGLess_Logo.png';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -19,8 +20,8 @@ export default function Navbar() {
     >
       <div className="w-[90%] max-w-5xl bg-background/70 backdrop-blur-xl border border-white/10 rounded-full px-6 py-3 flex items-center justify-between shadow-lg">
         {/* Logo left */}
-        <div className="text-white/90 font-bold tracking-widest text-sm uppercase">
-          Trident AI
+        <div className="flex items-center">
+          <img src={logo} alt="Trident AI" className="h-6 w-auto hover:opacity-80 transition-opacity cursor-pointer" />
         </div>
         
         {/* Center links - Hidden on small screens */}

@@ -6,7 +6,7 @@ import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
 import DetectionSection from './components/DetectionSection';
 import TerminalSection from './components/TerminalSection';
-import EndSection from './components/EndSection';
+import EndSection from './components/EndSection.jsx';
 
 // Register GSAP plugins once at the top level
 gsap.registerPlugin(ScrollTrigger);
