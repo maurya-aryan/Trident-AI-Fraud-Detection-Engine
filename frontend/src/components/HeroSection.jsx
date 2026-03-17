@@ -1,301 +1,233 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef, useMemo, useEffect, useState } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { useGLTF, PerspectiveCamera, Environment, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
-import { gsap, Quint } from 'gsap';
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-export default function HeroSection() {
-  const containerRef = useRef(null);
-  const canvasWrapperRef = useRef(null);
-  const loaderRef = useRef(null);
+gsap.registerPlugin(ScrollTrigger);
+
+// --- 3D Components ---
+
+function Trident({ tl }) {
+  const { scene } = useGLTF('/assets/trident.glb');
+  const tridentRef = useRef();
 
   useEffect(() => {
-    if (!canvasWrapperRef.current) return;
+    if (tl && tridentRef.current) {
+      // Phase 1: Emergence
+      tl.to(tridentRef.current.position, {
+        y: 0,
+        duration: 1,
+        ease: "power2.out"
+      }, 0);
 
-    // --- Original App Class Logic Integrated ---
-    class App {
-      constructor() {
-        this.init();
-      }
+      // Phase 2: Zoom & Interception
+      tl.to(tridentRef.current.position, {
+        y: 20,
+        duration: 0.5,
+        ease: "power2.in"
+      }, 1.5);
+    }
+  }, [tl]);
 
-      init() {
-        this.group = new THREE.Object3D();
-        this.gridSize = 40;
-        this.buildings = [];
-        this.fogConfig = {
-          color: '#343c3c', // Matches CSS --color-bg
-          near: 1,
-          far: 208
-        };
+  useFrame((state) => {
+    if (tridentRef.current) {
+      const t = state.clock.getElapsedTime();
+      tridentRef.current.rotation.y += 0.005;
+      tridentRef.current.position.y += Math.sin(t * 2) * 0.002;
+    }
+  });
 
-        this.width = window.innerWidth;
-        this.height = window.innerHeight;
+  return (
+    <primitive 
+      ref={tridentRef}
+      object={scene} 
+      scale={8} 
+      position={[0, -10, 0]} 
+    />
+  );
+}
 
-        this.createScene();
-        this.createCamera();
-        this.addFloor();
-        this.addBackgroundShape();
-        this.loadModels('/models/buildings.obj', this.onLoadModelsComplete.bind(this));
-        
-        this.pointLightObj3 = {
-          color: '#d3263a',
-          intensity: 15, // Adjusted for R180+ intensity scale
-          position: { x: 16, y: 100, z: -68 }
-        };
-        this.addPointLight(this.pointLightObj3);
-        
-        this.animate();
-        this.setupEvents();
-      }
-
-      createScene() {
-        this.scene = new THREE.Scene();
-        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        this.renderer.setSize(this.width, this.height);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-        canvasWrapperRef.current.appendChild(this.renderer.domElement);
-        this.scene.fog = new THREE.Fog(this.fogConfig.color, this.fogConfig.near, this.fogConfig.far);
-      }
-
-      createCamera() {
-        this.camera = new THREE.PerspectiveCamera(20, this.width / this.height, 1, 1000);
-        this.camera.position.set(3, 50, 155);
-        this.scene.add(this.camera);
-      }
-
-      addBackgroundShape() {
-        const planeGeometry = new THREE.PlaneGeometry(400, 100);
-        const planeMaterial = new THREE.MeshPhysicalMaterial({ color: '#fff' });
-        this.backgroundShape = new THREE.Mesh(planeGeometry, planeMaterial);
-        this.backgroundShape.position.y = 10;
-        this.backgroundShape.position.z = -150;
-        this.scene.add(this.backgroundShape);
-
-        this.mouseX = 3;
-        this.lastMouseX = 3;
-        this.lastMouseY = 65;
-        this.lastScale = 155;
-        
-        // Line Equation mapping logic from app.js
-        this.lineEq = (y2, y1, x2, x1, currentVal) => {
-          let m = (y2 - y1) / (x2 - x1);
-          let b = y1 - m * x1;
-          return m * currentVal + b;
-        };
-        this.lerp = (a, b, n) => (1 - n) * a + n * b;
-
-        this.updateDocHeight();
-      }
-
-      updateDocHeight() {
-        this.docheight = Math.max(
-          document.body.scrollHeight, 
-          document.body.offsetHeight, 
-          document.documentElement.clientHeight, 
-          document.documentElement.scrollHeight, 
-          document.documentElement.offsetHeight
-        );
-      }
-
-      setupEvents() {
-        this.onMouseMove = (ev) => {
-          this.mouseX = ev.clientX;
-        };
-
-        this.onResize = () => {
-          this.width = window.innerWidth;
-          this.height = window.innerHeight;
-          this.camera.aspect = this.width / this.height;
-          this.camera.updateProjectionMatrix();
-          this.renderer.setSize(this.width, this.height);
-          this.updateDocHeight();
-        };
-
-        window.addEventListener('mousemove', this.onMouseMove);
-        window.addEventListener('resize', this.onResize);
-      }
-
-      tilt() {
-        // Camera movement logic tied to scroll and mouse
-        this.lastMouseX = this.lerp(this.lastMouseX, this.lineEq(6, 0, this.width, 0, this.mouseX), 0.05);
-        const newScrollingPos = window.pageYOffset;
-        this.lastMouseY = this.lerp(this.lastMouseY, this.lineEq(0, 65, this.docheight, 0, newScrollingPos), 0.05);
-        this.lastScale = this.lerp(this.lastScale, this.lineEq(0, 158, this.docheight, 0, newScrollingPos), 0.05);
-        
-        this.camera.position.set(this.lastMouseX, this.lastMouseY, this.lastScale);
-        this.camera.lookAt(0, 0, 0);
-      }
-
-      addFloor() {
-        const planeGeometry = new THREE.PlaneGeometry(200, 200);
-        const planeMaterial = new THREE.MeshStandardMaterial({
-          color: '#000000',
-          metalness: 0,
-          roughness: 0,
-        });
-        const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-        plane.rotateX(-Math.PI / 2);
-        plane.position.y = 0;
-        this.scene.add(plane);
-      }
-
-      addPointLight(params) {
-        const pointLight = new THREE.PointLight(params.color, params.intensity);
-        pointLight.position.set(params.position.x, params.position.y, params.position.z);
-        this.scene.add(pointLight);
-      }
-
-      loadModels(url, callback) {
-        const objLoader = new OBJLoader();
-        objLoader.load(url, callback);
-      }
-
-      onLoadModelsComplete(obj) {
-        this.models = [...obj.children].map((model) => {
-          model.scale.set(0.01, 0.01, 0.01);
-          model.position.set(0, -14, 0);
-          model.receiveShadow = true;
-          model.castShadow = true;
-          return model;
-        });
-
-        this.draw();
-
-        setTimeout(() => {
-          if (loaderRef.current) loaderRef.current.classList.add('loader--done');
-          this.showBuildings();
-        }, 500);
-      }
-
-      draw() {
-        const boxSize = 3;
-        const material = new THREE.MeshPhysicalMaterial({
-          color: '#000',
-          metalness: 0,
-          roughness: 0.77,
-        });
-
-        for (let i = 0; i < this.gridSize; i++) {
-          for (let j = 0; j < this.gridSize; j++) {
-            const building = this.models[Math.floor(Math.random() * this.models.length)].clone();
-            building.material = material;
-            building.scale.y = Math.random() * (0.01); // max .009 + .01 simplified
-            building.position.x = i * boxSize;
-            building.position.z = j * boxSize;
-            this.group.add(building);
-            this.buildings.push(building);
-          }
-        }
-
-        this.group.position.set(-this.gridSize - 10, 1, -this.gridSize - 10);
-        this.scene.add(this.group);
-      }
-
-      showBuildings() {
-        this.buildings.sort((a, b) => b.position.z - a.position.z);
-        this.buildings.forEach((building, index) => {
-          gsap.to(building.position, {
-            y: 1,
-            duration: 0.6 + (index / 4000),
-            ease: "quint.out",
-            delay: index / 4000
-          });
-        });
-      }
-
-      animate() {
-        this.tilt();
-        this.renderer.render(this.scene, this.camera);
-        this.requestID = requestAnimationFrame(this.animate.bind(this));
-      }
-
-      destroy() {
-        cancelAnimationFrame(this.requestID);
-        window.removeEventListener('mousemove', this.onMouseMove);
-        window.removeEventListener('resize', this.onResize);
-        if (this.renderer) {
-          this.renderer.dispose();
-          if (canvasWrapperRef.current && this.renderer.domElement) {
-            canvasWrapperRef.current.removeChild(this.renderer.domElement);
-          }
-        }
+function ServerCity() {
+  const count = 40 * 40;
+  const meshRef = useRef();
+  
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  const gridPositions = useMemo(() => {
+    const pos = [];
+    for (let i = 0; i < 40; i++) {
+      for (let j = 0; j < 40; j++) {
+        pos.push([i * 4 - 80, 0, j * 4 - 80]);
       }
     }
+    return pos;
+  }, []);
 
-    const app = new App();
+  useEffect(() => {
+    if (!meshRef.current) return;
+    
+    gridPositions.forEach((pos, i) => {
+      dummy.position.set(pos[0], -2, pos[1]);
+      const height = 2 + Math.random() * 8;
+      dummy.scale.set(1, height, 1);
+      dummy.updateMatrix();
+      meshRef.current.setMatrixAt(i, dummy.matrix);
+    });
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  }, [dummy, gridPositions]);
+
+  return (
+    <instancedMesh ref={meshRef} args={[null, null, count]}>
+      <boxGeometry args={[1.5, 1, 1.5]} />
+      <meshStandardMaterial 
+        color="#111" 
+        metalness={0.8} 
+        roughness={0.2} 
+        emissive="#ff0000" 
+        emissiveIntensity={0.5} 
+      />
+    </instancedMesh>
+  );
+}
+
+function Experience() {
+  const cameraRef = useRef();
+  const [tl, setTl] = useState(null);
+
+  useEffect(() => {
+    const newTl = gsap.timeline({
+      scrollTrigger: {
+        trigger: ".scroll-height",
+        start: "top top",
+        end: "bottom bottom",
+        scrub: 1,
+      }
+    });
+
+    setTl(newTl);
+
+    // Phase 1 Title
+    newTl.to(".hero-title", {
+      opacity: 1,
+      y: 0,
+      duration: 0.5
+    }, 0.2);
+
+    // Phase 2 Zoom
+    newTl.to(".hero-title", {
+      opacity: 0,
+      duration: 0.3
+    }, 1.3);
+
+    if (cameraRef.current) {
+      newTl.to(cameraRef.current.position, {
+        z: 20, // Don't go too close
+        y: 10,
+        duration: 2,
+        ease: "power1.inOut"
+      }, 1.5);
+    }
+
+    // Phase 3 Arsenal Reveal
+    newTl.to(".feature-card", {
+      opacity: 1,
+      scale: 1,
+      stagger: 0.1,
+      duration: 0.8,
+      ease: "back.out(1.7)"
+    }, 3.5);
 
     return () => {
-      app.destroy();
+      if (newTl.scrollTrigger) newTl.scrollTrigger.kill();
+      newTl.kill();
     };
   }, []);
 
   return (
-    <div ref={containerRef} className="hero-container relative">
-      {/* 1:1 SVG Loader from original index.html */}
-      <div ref={loaderRef} className="loader">
-        <svg className="loader__icon" width="100" height="105" viewBox="0 0 100 105">
-          <g>
-            <path d="M18.605 20.909l26.375 8.01 1.317-4.339L18.041 16 5.483 23.247l2.266 3.926z" />
-            <path d="M18.605 28.909l26.375 8.01 1.317-4.339L18.041 24 5.483 31.247l2.266 3.926z" />
-            <path d="M18.605 36.909l26.375 8.01 1.317-4.339L18.041 32 5.483 39.247l2.266 3.926z" />
-            <path d="M18.605 44.909l26.375 8.01 1.317-4.339L18.041 40 5.483 47.247l2.266 3.926z" />
-            <path d="M18.605 52.909l26.375 8.01 1.317-4.339L18.041 48 5.483 55.246l2.266 3.927z" />
-            <path d="M18.605 60.909l26.375 8.01 1.317-4.339L18.041 56 5.483 63.246l2.266 3.927z" />
-            <path d="M18.605 68.909l26.375 8.01 1.317-4.339L18.041 64 5.483 71.246l2.266 3.927z" />
-            <path d="M18.605 76.909l26.375 8.01 1.317-4.339L18.041 72 5.483 79.246l2.266 3.927z" />
-          </g>
-          <g>
-            <path d="M61.689 4.909l26.375 8.01 1.317-4.339L61.125 0 48.567 7.247l2.266 3.926z" />
-            <path d="M61.689 12.909l26.375 8.01 1.317-4.339L61.125 8l-12.558 7.247 2.266 3.926z" />
-            <path d="M61.689 20.909l26.375 8.01 1.317-4.339L61.125 16l-12.558 7.247 2.266 3.926z" />
-            <path d="M61.689 28.909l26.375 8.01 1.317-4.339L61.125 24l-12.558 7.247 2.266 3.926z" />
-            <path d="M61.689 36.909l26.375 8.01 1.317-4.339L61.125 32l-12.558 7.247 2.266 3.926z" />
-            <path d="M61.689 44.909l26.375 8.01 1.317-4.339L61.125 40l-12.558 7.247 2.266 3.926z" />
-            <path d="M61.689 52.909l26.375 8.01 1.317-4.339L61.125 48l-12.558 7.246 2.266 3.927z" />
-            <path d="M61.689 60.909l26.375 8.01 1.317-4.339L61.125 56l-12.558 7.246 2.266 3.927z" />
-            <path d="M61.689 68.909l26.375 8.01 1.317-4.339L61.125 64l-12.558 7.246 2.266 3.927z" />
-            <path d="M61.689 76.909l26.375 8.01 1.317-4.339L61.125 72l-12.558 7.246 2.266 3.927z" />
-          </g>
-        </svg>
+    <>
+      <PerspectiveCamera ref={cameraRef} makeDefault position={[0, 15, 120]} fov={35} />
+      <color attach="background" args={['#000']} />
+      <fog attach="fog" args={['#000', 30, 180]} />
+      
+      <ambientLight intensity={0.5} />
+      <spotLight position={[30, 40, 30]} angle={0.2} penumbra={1} intensity={5} castShadow />
+      <directionalLight position={[-10, 20, 10]} intensity={2} color="#f14f58" />
+
+      <Trident tl={tl} />
+      <ServerCity />
+      
+      {/* Light for the Trident */}
+      <pointLight position={[0, 0, 5]} intensity={5} color="white" />
+      
+      <Environment preset="night" />
+      <ContactShadows position={[0, -2, 0]} opacity={0.6} scale={40} blur={1} far={10} />
+    </>
+  );
+}
+
+// --- Main UI Component ---
+
+const features = [
+  "Credential Exposure", "Malware Scanner", "AI Text Detection",
+  "Email Phishing", "URL Detection", "Prompt Injection",
+  "Fusion Model", "Campaign Graph", "SHAP Explainer"
+];
+
+export default function HeroSection() {
+  return (
+    <div className="relative w-full overflow-hidden bg-black">
+      {/* Scroll height driver */}
+      <div className="scroll-height h-[400vh]" />
+
+      {/* Fixed Background Canvas */}
+      <div className="fixed inset-0 z-0 h-screen w-full pointer-events-none">
+        <Canvas shadows gl={{ antialias: true }}>
+          <React.Suspense fallback={null}>
+            <Experience />
+          </React.Suspense>
+        </Canvas>
       </div>
 
-      <div className="frame">
-        <div className="frame__title-wrap">
-          <h1 className="frame__title">Buildings Wave Animation</h1>
+      {/* HTML UI Overlay */}
+      <div className="fixed inset-0 z-10 flex flex-col items-center justify-center pointer-events-none p-10">
+        
+        {/* Phase 1 Title */}
+        <div className="hero-title opacity-0 translate-y-10 text-center mb-20 px-4">
+          <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white uppercase italic">
+            Trident <span className="text-red-600">AI</span>
+          </h1>
+          <p className="text-xl md:text-2xl text-gray-400 font-light tracking-[0.3em] uppercase mt-4">
+            Fraud Detection Engine
+          </p>
         </div>
-        <div className="frame__credits">
-          Models by <a href="https://free3d.com/3d-model/19-low-poly-buildings-974347.html" target="_blank" rel="noopener noreferrer">Backlog Studio</a>
-        </div>
-        <div className="frame__links">
-          <a href="#">Previous Demo</a>
-          <a href="#">Article</a>
-          <a href="#">GitHub</a>
-        </div>
-        <div className="frame__scroll">scroll</div>
-        <div className="frame__demos">
-          <a href="#" className="frame__demo frame__demo--current">1</a>
-          <a href="#" className="frame__demo">2</a>
+
+        {/* Phase 3 Feature Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl w-full">
+          {features.map((feature, i) => (
+            <div 
+              key={i}
+              className="feature-card opacity-0 scale-90 p-8 border border-white/10 bg-white/5 backdrop-blur-xl rounded-2xl flex flex-col justify-between group hover:border-red-500/50 transition-colors duration-500"
+            >
+              <div className="mb-4 text-xs font-mono text-gray-500 uppercase tracking-widest flex justify-between items-center">
+                <span>Module {String(i + 1).padStart(2, '0')}</span>
+                <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2 leading-tight">
+                {feature}
+              </h3>
+              <p className="text-sm text-gray-400 font-light leading-relaxed">
+                Advanced multi-modal signal processing for {feature.toLowerCase()} insights.
+              </p>
+            </div>
+          ))}
         </div>
       </div>
 
-      <div ref={canvasWrapperRef} className="canvas-wrapper"></div>
-
-      <div className="content">
-        <h2 className="content__title">
-          <span className="content__title-inner">Resistance</span>
-          <span className="content__title-sub">106.4 FM</span>
-        </h2>
-      </div>
-
-      <div className="content content--final">
-        <p className="content__text">
-          Building 1278<br />
-          107 Hafnarbraut Road<br />
-          50X8 Paradise Falls<br />
-          New California
-        </p>
+      {/* Scroll indicator */}
+      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center">
+        <span className="text-[10px] uppercase tracking-[0.5em] text-gray-500 mb-2">Initialize Scroll</span>
+        <div className="w-[1px] h-12 bg-gradient-to-b from-red-600 to-transparent animate-bounce" />
       </div>
     </div>
   );
