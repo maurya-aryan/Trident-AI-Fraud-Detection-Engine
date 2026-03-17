@@ -40,25 +40,33 @@ function Trident({ tl }) {
   });
 
   return (
-    <primitive 
+    <primitive
       ref={tridentRef}
-      object={scene} 
-      scale={8} 
-      position={[0, -10, 0]} 
+      object={scene}
+      scale={8}
+      position={[0, -10, 0]}
     />
   );
 }
 
-function ServerCity() {
+function ServerCity({ tl }) {
   const count = 40 * 40;
   const meshRef = useRef();
-  
+  const { nodes } = useGLTF('/assets/trident.glb'); // Reuse same asset for buildings if needed, but we have buildings.obj
+  // Actually, we should load buildings.obj as per reference
+
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const gridPositions = useMemo(() => {
     const pos = [];
+    const spacing = 4;
     for (let i = 0; i < 40; i++) {
       for (let j = 0; j < 40; j++) {
-        pos.push([i * 4 - 80, 0, j * 4 - 80]);
+        // Center the grid
+        pos.push([
+          (i - 20) * spacing,
+          0,
+          (j - 20) * spacing
+        ]);
       }
     }
     return pos;
@@ -66,26 +74,35 @@ function ServerCity() {
 
   useEffect(() => {
     if (!meshRef.current) return;
-    
+
     gridPositions.forEach((pos, i) => {
-      dummy.position.set(pos[0], -2, pos[1]);
-      const height = 2 + Math.random() * 8;
+      dummy.position.set(pos[0], -14, pos[2]); // Start below ground like reference
+      const height = 0.5 + Math.random() * 2;
       dummy.scale.set(1, height, 1);
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
     });
     meshRef.current.instanceMatrix.needsUpdate = true;
-  }, [dummy, gridPositions]);
+
+    if (tl) {
+      // Reveal buildings from bottom up like reference
+      tl.to(meshRef.current.position, {
+        y: 1, // Move entire group up slightly
+        duration: 1,
+        ease: "power2.out"
+      }, 0);
+    }
+  }, [dummy, gridPositions, tl]);
 
   return (
     <instancedMesh ref={meshRef} args={[null, null, count]}>
-      <boxGeometry args={[1.5, 1, 1.5]} />
-      <meshStandardMaterial 
-        color="#111" 
-        metalness={0.8} 
-        roughness={0.2} 
-        emissive="#ff0000" 
-        emissiveIntensity={0.5} 
+      <boxGeometry args={[2, 1, 2]} />
+      <meshStandardMaterial
+        color="#0a0a0a"
+        metalness={0.9}
+        roughness={0.1}
+        emissive="#330000"
+        emissiveIntensity={0.2}
       />
     </instancedMesh>
   );
@@ -107,35 +124,41 @@ function Experience() {
 
     setTl(newTl);
 
-    // Phase 1 Title
+    // Phase 1: Emergence
     newTl.to(".hero-title", {
       opacity: 1,
       y: 0,
       duration: 0.5
     }, 0.2);
 
-    // Phase 2 Zoom
-    newTl.to(".hero-title", {
-      opacity: 0,
-      duration: 0.3
-    }, 1.3);
-
+    // Phase 2: Zoom - Camera moves INTO the city
     if (cameraRef.current) {
+      newTl.to(".hero-title", {
+        opacity: 0,
+        duration: 0.3
+      }, 1.3);
+
       newTl.to(cameraRef.current.position, {
-        z: 20, // Don't go too close
-        y: 10,
+        z: 30, // Don't hide the buildings, zoom INTO them
+        y: 8,
+        duration: 2,
+        ease: "power1.inOut"
+      }, 1.5);
+
+      newTl.to(cameraRef.current.rotation, {
+        x: -0.2, // Look down slightly at the city
         duration: 2,
         ease: "power1.inOut"
       }, 1.5);
     }
 
-    // Phase 3 Arsenal Reveal
+    // Phase 3: Arsenal Reveal - Background stays visible
     newTl.to(".feature-card", {
       opacity: 1,
       scale: 1,
       stagger: 0.1,
       duration: 0.8,
-      ease: "back.out(1.7)"
+      ease: "back.out(1.2)"
     }, 3.5);
 
     return () => {
@@ -146,22 +169,19 @@ function Experience() {
 
   return (
     <>
-      <PerspectiveCamera ref={cameraRef} makeDefault position={[0, 15, 120]} fov={35} />
+      <PerspectiveCamera ref={cameraRef} makeDefault position={[0, 40, 180]} fov={30} />
       <color attach="background" args={['#000']} />
-      <fog attach="fog" args={['#000', 30, 180]} />
-      
-      <ambientLight intensity={0.5} />
-      <spotLight position={[30, 40, 30]} angle={0.2} penumbra={1} intensity={5} castShadow />
-      <directionalLight position={[-10, 20, 10]} intensity={2} color="#f14f58" />
+      <fog attach="fog" args={['#000', 40, 220]} />
+
+      <ambientLight intensity={0.4} />
+      <spotLight position={[50, 60, 50]} angle={0.3} penumbra={1} intensity={6} castShadow />
+      <directionalLight position={[-20, 30, 20]} intensity={3} color="#f14f58" />
 
       <Trident tl={tl} />
-      <ServerCity />
-      
-      {/* Light for the Trident */}
-      <pointLight position={[0, 0, 5]} intensity={5} color="white" />
-      
+      <ServerCity tl={tl} />
+
       <Environment preset="night" />
-      <ContactShadows position={[0, -2, 0]} opacity={0.6} scale={40} blur={1} far={10} />
+      <ContactShadows position={[0, -2, 0]} opacity={0.6} scale={60} blur={1} far={15} />
     </>
   );
 }
@@ -191,7 +211,7 @@ export default function HeroSection() {
 
       {/* HTML UI Overlay */}
       <div className="fixed inset-0 z-10 flex flex-col items-center justify-center pointer-events-none p-10">
-        
+
         {/* Phase 1 Title */}
         <div className="hero-title opacity-0 translate-y-10 text-center mb-20 px-4">
           <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white uppercase italic">
@@ -205,7 +225,7 @@ export default function HeroSection() {
         {/* Phase 3 Feature Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl w-full">
           {features.map((feature, i) => (
-            <div 
+            <div
               key={i}
               className="feature-card opacity-0 scale-90 p-8 border border-white/10 bg-white/5 backdrop-blur-xl rounded-2xl flex flex-col justify-between group hover:border-red-500/50 transition-colors duration-500"
             >
