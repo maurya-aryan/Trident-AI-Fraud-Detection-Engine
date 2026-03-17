@@ -733,8 +733,7 @@ export default function EmailFunnel() {
       ref={sectionRef}
       style={{
         minHeight: "100vh",
-        background:
-          "radial-gradient(ellipse 80% 55% at 50% 15%, #091a2e 0%, #060c18 50%, #030608 100%)",
+        background: "transparent",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -745,17 +744,6 @@ export default function EmailFunnel() {
         perspective: "1200px" // 3D perspective
       }}
     >
-      {/* Subtle grid overlay */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          pointerEvents: "none",
-          backgroundImage:
-            "linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px)",
-          backgroundSize: "44px 44px"
-        }}
-      />
 
       {/* Canvas card with 3D transform */}
       <div

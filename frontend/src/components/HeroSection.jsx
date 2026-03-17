@@ -322,6 +322,7 @@ function FrameController({ isVisible }) {
   return null;
 }
 
+
 export default function HeroSection() {
   const scrollRef = useRef(null);
   const [heroVisible, setHeroVisible] = useState(true);
@@ -342,68 +343,74 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <div className="relative w-full overflow-hidden bg-black">
-      {/* Scroll height driver — observed for visibility */}
-      <div ref={scrollRef} className="scroll-height h-[400vh]" />
+    <div className="relative w-full bg-black">
+      {/* Container with scroll height driver */}
+      <div ref={scrollRef} className="scroll-height relative h-[400vh] w-full">
 
-      {/* Fixed Background Canvas — hidden when scrolled past hero */}
-      <div
-        className="fixed inset-0 z-0 h-screen w-full pointer-events-none"
-        style={{ display: heroVisible ? 'block' : 'none' }}
-      >
-        <Canvas shadows gl={{ antialias: true }} frameloop="demand">
-          <FrameController isVisible={heroVisible} />
-          <React.Suspense fallback={null}>
-            <Experience />
-          </React.Suspense>
-        </Canvas>
-      </div>
+        {/* Sticky Wrapper — pins the content for 400vh and scrolls off naturally */}
+        <div className="sticky top-0 h-screen w-full overflow-hidden">
+        
+          {/* Background Canvas */}
+          <div
+            className="absolute inset-0 z-0 h-screen w-full pointer-events-none"
+            style={{ display: heroVisible ? 'block' : 'none' }}
+          >
+            <Canvas shadows gl={{ antialias: true, alpha: true }} frameloop="demand">
+              <FrameController isVisible={heroVisible} />
+              <React.Suspense fallback={null}>
+                <Experience />
+              </React.Suspense>
+            </Canvas>
+          </div>
 
-      {/* HTML UI Overlay — also hidden when hero is out of view */}
-      <div
-        className="fixed inset-0 z-10 flex flex-col items-center justify-center pointer-events-none p-10"
-        style={{ display: heroVisible ? 'flex' : 'none' }}
-      >
+          {/* HTML UI Overlay */}
+          <div
+            className="absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none p-10"
+            style={{ display: heroVisible ? 'flex' : 'none' }}
+          >
 
-        {/* Phase 1 Title */}
-        <div className="hero-title opacity-0 translate-y-10 text-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-          <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white uppercase">
-            Trident
-          </h1>
-          <p className="text-xl md:text-2xl text-blue-200/60 font-light tracking-[0.3em] uppercase mt-4">
-            Fraud Detection Engine
-          </p>
-        </div>
-
-        {/* Phase 3 Feature Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl w-full">
-          {features.map((feature, i) => (
-            <div
-              key={i}
-              className="feature-card opacity-0 scale-90 p-8 border border-blue-400/10 bg-blue-950/1 backdrop-blur-sm rounded-2xl flex flex-col justify-between group hover:border-blue-400/40 transition-colors duration-500 pointer-events-auto cursor-pointer"
-            >
-              <div className="mb-4 text-xs font-mono text-blue-300/50 uppercase tracking-widest flex justify-between items-center">
-                <span>Module {String(i + 1).padStart(2, '0')}</span>
-                <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-2 leading-tight">
-                {feature}
-              </h3>
-              <p className="text-sm text-blue-200/50 font-light leading-relaxed">
-                Advanced multi-modal signal processing for {feature.toLowerCase()} insights.
+            {/* Phase 1 Title */}
+            <div className="hero-title opacity-0 translate-y-10 text-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+              <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white uppercase">
+                Trident
+              </h1>
+              <p className="text-xl md:text-2xl text-blue-200/60 font-light tracking-[0.3em] uppercase mt-4">
+                Fraud Detection Engine
               </p>
             </div>
-          ))}
-        </div>
-      </div>
 
-      {/* Scroll indicator */}
-      <div
-        className="scroll-indicator fixed bottom-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center"
-        style={{ display: heroVisible ? 'flex' : 'none' }}
-      >
-        <span className="text-[10px] uppercase tracking-[0.5em] text-blue-300/40 mb-2">Initialize Scroll</span>
-        <div className="w-[1px] h-12 bg-gradient-to-b from-blue-400 to-transparent animate-bounce" />
+            {/* Phase 3 Feature Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl w-full">
+              {features.map((feature, i) => (
+                <div
+                  key={i}
+                  className="feature-card opacity-0 scale-90 p-8 border border-blue-400/10 bg-blue-950/1 backdrop-blur-sm rounded-2xl flex flex-col justify-between group hover:border-blue-400/40 transition-colors duration-500 pointer-events-auto cursor-pointer"
+                >
+                  <div className="mb-4 text-xs font-mono text-blue-300/50 uppercase tracking-widest flex justify-between items-center">
+                    <span>Module {String(i + 1).padStart(2, '0')}</span>
+                    <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-2 leading-tight">
+                    {feature}
+                  </h3>
+                  <p className="text-sm text-blue-200/50 font-light leading-relaxed">
+                    Advanced multi-modal signal processing for {feature.toLowerCase()} insights.
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Scroll indicator */}
+          <div
+            className="scroll-indicator absolute bottom-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center"
+            style={{ display: heroVisible ? 'flex' : 'none' }}
+          >
+            <span className="text-[10px] uppercase tracking-[0.5em] text-blue-300/40 mb-2">Initialize Scroll</span>
+            <div className="w-[1px] h-12 bg-gradient-to-b from-blue-400 to-transparent animate-bounce" />
+          </div>
+          
+        </div>
       </div>
     </div>
   );
