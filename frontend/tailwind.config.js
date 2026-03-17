@@ -14,6 +14,7 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'SF Pro Display', 'sans-serif'],
+        merriweather: ['Merriweather', 'serif'],
       }
     },
   },

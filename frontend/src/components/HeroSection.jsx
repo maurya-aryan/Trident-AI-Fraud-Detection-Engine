@@ -230,7 +230,7 @@ function Experience() {
 
       newTl.to(".hero-title", {
         opacity: 1,
-        y: 0,
+        y: -100,
         duration: 0.15,
       }, 0.05);
 
@@ -241,7 +241,7 @@ function Experience() {
 
       newTl.to(".hero-title", {
         opacity: 0,
-        y: -50,
+        y: -150,
         duration: 0.1,
       }, 0.35);
 
@@ -391,8 +391,8 @@ export default function HeroSection() {
 
         {/* Phase 1 Title */}
         <div className="hero-title opacity-0 translate-y-10 text-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-          <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white uppercase italic">
-            Trident <span className="text-blue-400">AI</span>
+          <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white uppercase">
+            Trident
           </h1>
           <p className="text-xl md:text-2xl text-blue-200/60 font-light tracking-[0.3em] uppercase mt-4">
             Fraud Detection Engine

@@ -1,4 +1,4 @@
-import EmailFunnel from './EmailFunnel';
+import EmailFunnel from './trident-funnel/EmailFunnel';
 import Particles from './Particles';
 
 export default function DetectionSection() {

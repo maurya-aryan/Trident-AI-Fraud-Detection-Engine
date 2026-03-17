@@ -5,146 +5,44 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 gsap.registerPlugin(ScrollTrigger);
 
 function EndSection() {
-  const canvasRef = useRef(null);
   const sectionRef = useRef(null);
-  const originalContentRef = useRef(null);
   const githubContentRef = useRef(null);
 
-  const frameCount = 104;
-  const images = useRef([]);
-
   useEffect(() => {
-    const currentFrame = index => `/footer-sequence/ezgif-frame-${(index + 1).toString().padStart(3, '0')}.jpg`;
-    const playhead = { frame: 0 };
-    let tl;
+    const ctx = gsap.context(() => {
 
-    const renderFrame = (index) => {
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext('2d');
-      if (!ctx || !images.current[index]) return;
-
-      const img = images.current[index];
-      if (img.width === 0 || img.height === 0) return;
-
-      const r1 = img.width / img.height;
-      const r2 = canvas.width / canvas.height;
-      let drawWidth, drawHeight, offsetX, offsetY;
-      
-      if (r1 < r2) {
-          drawWidth = canvas.width;
-          drawHeight = canvas.width / r1;
-          offsetX = 0;
-          offsetY = (canvas.height - drawHeight) / 2;
-      } else {
-          drawWidth = canvas.height * r1;
-          drawHeight = canvas.height;
-          offsetX = (canvas.width - drawWidth) / 2;
-          offsetY = 0;
-      }
-      
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
-    };
-
-    const handleResize = () => {
-      if (canvasRef.current && sectionRef.current) {
-         canvasRef.current.width = window.innerWidth;
-         canvasRef.current.height = window.innerHeight;
-         renderFrame(Math.round(playhead.frame));
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    handleResize();
-
-    const createTimeline = () => {
-      tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: 'top top',
-          end: '+=400%', // Scroll for 4 screens for smooth scrubbing
-          pin: true,
-          scrub: 0.5,
-        }
-      });
-
-      // 1. Fade out original content quickly (first 15% of scroll)
-      tl.to(originalContentRef.current, {
-          opacity: 0,
-          y: -50,
-          duration: 0.15,
-          ease: 'power2.inOut'
-      }, 0);
-
-      // 2. Play the frames (104 total), taking the entire scroll timeline
-      tl.to(playhead, {
-        frame: frameCount - 1,
-        snap: 'frame',
-        ease: 'none',
-        onUpdate: () => renderFrame(Math.round(playhead.frame)),
-        duration: 1
-      }, 0);
-
-      // 3. Fade in the GitHub content near the end (last 25% of scroll)
-      tl.fromTo(githubContentRef.current, 
-        { opacity: 0, y: 50, scale: 0.95 }, 
-        { opacity: 1, y: 0, scale: 1, duration: 0.25, ease: 'power2.out' }, 
-        0.75
-      );
-    };
-
-    // Preload images
-    let loadedCount = 0;
-    images.current = []; // Clear array
-    for (let i = 0; i < frameCount; i++) {
-        const img = new Image();
-        img.src = currentFrame(i);
-        images.current.push(img);
-        img.onload = () => {
-            loadedCount++;
-            if (i === 0) {
-                renderFrame(0);
+      if (githubContentRef.current) {
+        gsap.fromTo(githubContentRef.current, 
+          { opacity: 0, y: 30, scale: 0.98 },
+          {
+            opacity: 1, 
+            y: 0, 
+            scale: 1,
+            duration: 0.8, 
+            delay: 0.2,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: githubContentRef.current,
+              start: 'top 85%',
+              toggleActions: 'play none none reverse'
             }
-            if (loadedCount === frameCount) {
-                createTimeline();
-            }
-        };
-    }
+          }
+        );
+      }
+    }, sectionRef);
 
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (tl && tl.scrollTrigger) tl.scrollTrigger.kill();
-      if (tl) tl.kill();
-    };
+    return () => ctx.revert();
   }, []);
 
   return (
-    <section ref={sectionRef} className="relative w-full h-screen bg-black overflow-hidden flex flex-col items-center justify-center border-t border-accent/10">
-      <canvas ref={canvasRef} className="absolute inset-0 z-0 h-full w-full object-cover opacity-80" />
+    <section ref={sectionRef} className="relative w-full min-h-screen bg-black overflow-hidden flex flex-col items-center justify-center py-32 gap-32 border-t border-accent/10">
       
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none z-10" />
+      {/* Background Glow */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/3 to-black pointer-events-none z-0" />
 
-      {/* Original Content */}
-      <div ref={originalContentRef} className="absolute z-20 text-center max-w-2xl px-6 flex flex-col items-center justify-center">
-        <h2 className="text-4xl md:text-5xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-          Secure your entire ecosystem.
-        </h2>
-        <p className="text-lg text-white/60 mb-10">
-          Trident AI. Built for scale, forged for protection.
-        </p>
-
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <button className="px-8 py-3 rounded-full bg-accent text-background font-bold hover:bg-white transition-colors duration-300 shadow-[0_0_20px_rgba(0,214,255,0.3)]">
-            Initialize Trident
-          </button>
-          <button className="px-8 py-3 rounded-full bg-transparent border border-white/20 text-white/80 font-medium hover:border-white/50 hover:text-white transition-colors duration-300">
-            View Engine Specs
-          </button>
-        </div>
-      </div>
 
       {/* GitHub Content */}
-      <div ref={githubContentRef} className="absolute z-30 flex flex-col items-center justify-center text-center px-6 opacity-0 pointer-events-none w-full max-w-4xl mx-auto">
+      <div ref={githubContentRef} className="relative z-10 flex flex-col items-center justify-center text-center px-6 w-full max-w-4xl mx-auto">
         <h2 className="text-5xl md:text-7xl font-black mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400 tracking-tight drop-shadow-2xl">
           Open Source Security
         </h2>
