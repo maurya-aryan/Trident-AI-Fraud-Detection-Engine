@@ -52,29 +52,6 @@ function Rain({ count = 3000 }) {
 // --- Storm Component (clouds + lightning) ---
 
 function Storm() {
-  const lightningLightRef = useRef();
-  const lightningActive = useRef(false);
-
-  useFrame(() => {
-    // Lightning flash – random bursts illuminate the scene
-    // Increased probability from 0.003 to 0.015 so it happens more often
-    if (Math.random() < 0.03 && !lightningActive.current) {
-      lightningActive.current = true;
-
-      if (lightningLightRef.current) {
-        const randomX = (Math.random() - 0.5) * 60;
-        lightningLightRef.current.position.x = randomX;
-        lightningLightRef.current.intensity = 120;
-
-        setTimeout(() => {
-          if (lightningLightRef.current)
-            lightningLightRef.current.intensity = 0;
-          lightningActive.current = false;
-        }, 350);
-      }
-    }
-  });
-
   return (
     <group>
       {/* Storm clouds above the Trident */}
@@ -94,11 +71,10 @@ function Storm() {
 
       <Rain count={3000} />
 
-      {/* Lightning light - warm yellow flash that illuminates the entire scene including buildings */}
+      {/* Constant lightning light - warm yellow flash that illuminates the entire scene including buildings */}
       <pointLight
-        ref={lightningLightRef}
         position={[0, 15, -30]}
-        intensity={0}
+        intensity={100}
         color="#e6d8b3"
         distance={250}
         decay={0.5}
@@ -160,12 +136,12 @@ function ServerCity() {
 
     const gridSize = 40;
     const boxSize = 3;
-    // Pure black buildings (like inspiration) - the blue glow comes from lighting, not material
+    // Warm dark gray to catch the constant warm light instead of being pure black
     const meshParams = {
-      color: '#000',
-      metalness: 0,
+      color: '#2b271f',
+      metalness: 0.1,
       emissive: '#000',
-      roughness: 0.77,
+      roughness: 0.65,
     };
     const max = 0.009;
     const min = 0.001;
