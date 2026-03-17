@@ -45,6 +45,9 @@ export default function InteractiveTerminal() {
     es.onopen = () => setConnected(true);
     es.onerror = () => {
       setConnected(false);
+      // Close to prevent infinite auto-retry spam when backend is down
+      es.close();
+      eventSourceRef.current = null;
     };
 
     es.onmessage = (ev) => {

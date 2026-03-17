@@ -572,8 +572,12 @@ export default function EmailFunnel() {
       });
     });
 
-    // Start physics runner
-    const runner = Runner.create();
+    // Start physics runner — configure it to prevent maxUpdates errors
+    // when the browser tab is hidden and delta times become huge.
+    const runner = Runner.create({
+      isFixed: true,
+      delta: 1000 / 60
+    });
     runnerRef.current = runner;
     Runner.run(runner, engine);
 
@@ -645,9 +649,6 @@ export default function EmailFunnel() {
     <section
       ref={sectionRef}
       style={{
-        minHeight: "100vh",
-        background:
-          "radial-gradient(ellipse 80% 55% at 50% 15%, #091a2e 0%, #060c18 50%, #030608 100%)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",

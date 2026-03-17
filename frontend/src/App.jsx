@@ -13,6 +13,12 @@ gsap.registerPlugin(ScrollTrigger);
 
 function App() {
   useEffect(() => {
+    // Force scroll to top on reload
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+
     // Refresh ScrollTrigger after all content mounts
     ScrollTrigger.refresh();
   }, []);
@@ -26,12 +32,12 @@ function App() {
           <HeroSection />
         </div>
 
-        <div id="detection">
-          <DetectionSection />
-        </div>
-
         <div id="terminal">
           <TerminalSection />
+        </div>
+
+        <div id="detection">
+          <DetectionSection />
         </div>
 
 
