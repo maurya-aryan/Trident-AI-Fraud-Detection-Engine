@@ -689,8 +689,14 @@ html, body,
 # never shows the cover hero or the module/tab strip.
 _detail_alert_id = st.query_params.get("alert_id", None)
 _is_detail_page  = _detail_alert_id is not None
+_alert_bucket    = st.query_params.get("alert_bucket", None)
+if isinstance(_alert_bucket, list):
+    _alert_bucket = _alert_bucket[0] if _alert_bucket else None
+if isinstance(_alert_bucket, str):
+    _alert_bucket = _alert_bucket.lower().strip()
+_is_bucket_page = _alert_bucket in {"fraud", "safe"}
 
-if _is_detail_page:
+if _is_detail_page or _is_bucket_page:
     # Override container width for full-screen detail view
     st.markdown("""
 <style>
@@ -1064,7 +1070,7 @@ def display_result(result):
 # ══════════════════════════════════════════════════════════════════════════════
 # MAIN CONTENT  (module strip only shown on the homepage)
 # ══════════════════════════════════════════════════════════════════════════════
-if not _is_detail_page:
+if not (_is_detail_page or _is_bucket_page):
     st.markdown("<div style='margin-top: 48px'></div>", unsafe_allow_html=True)
 
     # Module status strip
@@ -1096,6 +1102,631 @@ def fetch_alerts(limit: int = 30):
         return resp.json().get("alerts", [])
     except Exception:
         return []
+
+
+def render_alert_list(entries, key_prefix: str):
+        for original_idx, entry in entries:
+                rec = entry.get("alert", {})
+                ts = entry.get("received_at", "")
+                subj = rec.get("subject") or "(no subject)"
+                sender = rec.get("sender") or "(unknown)"
+                band = rec.get("risk_band") or "LOW"
+                score = rec.get("risk_score") or 0
+
+                color = _BAND_COLOR.get(band, "#888")
+                bg = _BAND_BG.get(band, "rgba(100,100,100,0.05)")
+                icon = _BAND_ICON.get(band, "❓")
+
+                col1, col2 = st.columns([7, 1])
+
+                with col1:
+                        card_html = f"""
+                        <div style="
+                                background:{bg};
+                                border:1px solid {color}33;
+                                border-radius:12px 0 0 12px;
+                                padding:16px 20px;
+                                ">
+                            <div style="display:flex;align-items:center;gap:16px;">
+                                <div style="font-size:2rem;line-height:1">{icon}</div>
+                                <div style="flex:1;">
+                                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+                                        <span style="background:{color}22;color:{color};padding:4px 12px;border-radius:6px;font-size:0.7rem;font-weight:700;letter-spacing:0.5px">{band}</span>
+                                        <span style="color:{color};font-size:1.1rem;font-weight:700">{score:.0f}/100</span>
+                                        <span style="color:#334155;font-size:1.2rem">·</span>
+                                        <span style="color:#e2e8f0;font-size:0.95rem;font-weight:600">{subj}</span>
+                                    </div>
+                                    <div style="font-size:0.8rem;color:#64748b;">
+                                        <span style="color:#94a3b8">From:</span> {sender} &nbsp;·&nbsp; <span style="color:#94a3b8">At:</span> {ts}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        """
+                        st.markdown(card_html, unsafe_allow_html=True)
+
+                with col2:
+                        st.markdown("<div style='height:25px'></div>", unsafe_allow_html=True)
+                        if st.button("▶ View", key=f"alert_btn_{key_prefix}_{original_idx}", type="primary", use_container_width=True):
+                                st.query_params["alert_id"] = str(original_idx)
+                                st.rerun()
+
+                st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+
+
+def render_email_funnel_component():
+        components.html(
+                """
+<div id="trident-funnel-root" style="width:100%; min-height:760px; position:relative; border-radius:18px; overflow:hidden; background:radial-gradient(ellipse 80% 55% at 50% 15%, #091a2e 0%, #060c18 50%, #030608 100%); border:1px solid rgba(0,212,255,0.15); box-shadow:0 0 100px rgba(0,212,255,0.055), 0 20px 60px rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; padding:32px 10px;">
+    <div style="position:absolute; inset:0; pointer-events:none; background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px); background-size:44px 44px;"></div>
+    <canvas id="trident-funnel-canvas" style="display:block; width:min(100%, 520px); height:auto; aspect-ratio:520/680; position:relative; z-index:2;"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
+<script>
+(function () {
+    const root = document.getElementById("trident-funnel-root");
+    const canvas = document.getElementById("trident-funnel-canvas");
+    if (!root || !canvas || !window.Matter) return;
+
+    const CW = 520, CH = 680, CX = CW / 2;
+    const PR = 45, AR = 30;
+    const FTY = CH * 0.06;
+    const FLX = CW * 0.08;
+    const FRX = CW * 0.92;
+    const NTY = CH * 0.47;
+    const NBY = CH * 0.59;
+    const ENY = CH * 0.87;
+    const LEX = CW * 0.21;
+    const REX = CW * 0.79;
+    const NLX = CX - PR;
+    const NRX = CX + PR;
+    const BALL_R = 11.5;
+    const CYAN = "rgba(0,212,255,";
+    const ENDPOINT_BOX_W = 128;
+    const ENDPOINT_BOX_H = 42;
+    const ENDPOINT_BOX_OFFSET_Y = 26;
+    const SPAWN_BATCH_SIZE = 4;
+    const SPAWN_SEQUENCE_GAP_MS = 800;
+    const SPAWN_CYCLE_MS = SPAWN_BATCH_SIZE * SPAWN_SEQUENCE_GAP_MS;
+    const ROUTE_FORCE_SCALE = 0.000045;
+    const ABSORB_DURATION_MS = 320;
+    const PULSE_DURATION_MS = 520;
+    const BRANCH_LOCK_Y = NBY + 8;
+    const BRANCH_LOCK_MIN_X_OFFSET = AR * 0.34;
+
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
+    function roundRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+    }
+
+    function easeOutCubic(t) {
+        return 1 - Math.pow(1 - t, 3);
+    }
+
+    function createFunnelWalls() {
+        const { Bodies } = Matter;
+        const walls = [];
+        const wallOptions = {
+            isStatic: true,
+            friction: 0.1,
+            restitution: 0.3,
+            render: { visible: false }
+        };
+
+        const leftFunnelAngle = Math.atan2(NTY - FTY, NLX - FLX);
+        const leftFunnelLength = Math.hypot(NTY - FTY, NLX - FLX);
+        walls.push(Bodies.rectangle((FLX + NLX) / 2, (FTY + NTY) / 2, leftFunnelLength, 4, { ...wallOptions, angle: leftFunnelAngle }));
+
+        const rightFunnelAngle = Math.atan2(NTY - FTY, FRX - NRX);
+        const rightFunnelLength = Math.hypot(NTY - FTY, FRX - NRX);
+        walls.push(Bodies.rectangle((FRX + NRX) / 2, (FTY + NTY) / 2, rightFunnelLength, 4, { ...wallOptions, angle: -rightFunnelAngle }));
+
+        walls.push(Bodies.rectangle(NLX, (NTY + NBY) / 2, 4, NBY - NTY, wallOptions));
+        walls.push(Bodies.rectangle(NRX, (NTY + NBY) / 2, 4, NBY - NTY, wallOptions));
+
+        const segments = 8;
+        for (let i = 0; i < segments; i++) {
+            const t1 = i / segments;
+            const t2 = (i + 1) / segments;
+            const y1 = lerp(NBY, ENY, t1);
+            const y2 = lerp(NBY, ENY, t2);
+
+            const loX1 = lerp(NLX, LEX - AR, Math.pow(t1, 0.7));
+            const loX2 = lerp(NLX, LEX - AR, Math.pow(t2, 0.7));
+            const liX1 = lerp(CX, LEX + AR, Math.pow(t1, 0.7));
+            const liX2 = lerp(CX, LEX + AR, Math.pow(t2, 0.7));
+            const roX1 = lerp(NRX, REX + AR, Math.pow(t1, 0.7));
+            const roX2 = lerp(NRX, REX + AR, Math.pow(t2, 0.7));
+            const riX1 = lerp(CX, REX - AR, Math.pow(t1, 0.7));
+            const riX2 = lerp(CX, REX - AR, Math.pow(t2, 0.7));
+
+            const mk = (x1, y1i, x2, y2i) => {
+                walls.push(Bodies.rectangle(
+                    (x1 + x2) / 2,
+                    (y1i + y2i) / 2,
+                    Math.hypot(x2 - x1, y2i - y1i),
+                    4,
+                    { ...wallOptions, angle: Math.atan2(y2i - y1i, x2 - x1) }
+                ));
+            };
+
+            mk(loX1, y1, loX2, y2);
+            mk(liX1, y1, liX2, y2);
+            mk(roX1, y1, roX2, y2);
+            mk(riX1, y1, riX2, y2);
+        }
+
+        walls.push(Bodies.rectangle(LEX, ENY + 10, AR * 2, 10, wallOptions));
+        walls.push(Bodies.rectangle(REX, ENY + 10, AR * 2, 10, wallOptions));
+        return walls;
+    }
+
+    function createSinkSensors() {
+        const { Bodies } = Matter;
+        return [
+            Bodies.circle(LEX, ENY, 28, { isStatic: true, isSensor: true, label: "left-sink", render: { visible: false } }),
+            Bodies.circle(REX, ENY, 28, { isStatic: true, isSensor: true, label: "right-sink", render: { visible: false } }),
+            Bodies.rectangle(LEX, ENY + ENDPOINT_BOX_OFFSET_Y + ENDPOINT_BOX_H / 2, ENDPOINT_BOX_W + 10, ENDPOINT_BOX_H + 10, { isStatic: true, isSensor: true, label: "left-box-sink", render: { visible: false } }),
+            Bodies.rectangle(REX, ENY + ENDPOINT_BOX_OFFSET_Y + ENDPOINT_BOX_H / 2, ENDPOINT_BOX_W + 10, ENDPOINT_BOX_H + 10, { isStatic: true, isSensor: true, label: "right-box-sink", render: { visible: false } })
+        ];
+    }
+
+    function drawArm(ctx, nStartX, endX, isLeft) {
+        const owX0 = nStartX;
+        const owXe = isLeft ? endX - AR : endX + AR;
+        const iwX0 = CX;
+        const iwXe = isLeft ? endX + AR : endX - AR;
+        const cy = lerp(NBY, ENY, 0.55);
+        const owCx = lerp(owX0, owXe, 0.42);
+        const iwCx = lerp(iwX0, iwXe, 0.42);
+
+        ctx.beginPath();
+        ctx.moveTo(owX0, NBY);
+        ctx.bezierCurveTo(owCx, cy, owXe, cy, owXe, ENY);
+        ctx.lineTo(iwXe, ENY);
+        ctx.bezierCurveTo(iwCx, cy, iwX0, cy, iwX0, NBY);
+        ctx.closePath();
+        const ag = ctx.createLinearGradient(0, NBY, 0, ENY);
+        ag.addColorStop(0, `${CYAN}0.12)`);
+        ag.addColorStop(0.5, `${CYAN}0.06)`);
+        ag.addColorStop(1, `${CYAN}0.04)`);
+        ctx.fillStyle = ag;
+        ctx.fill();
+
+        ctx.save();
+        ctx.shadowColor = "#00d4ff";
+        ctx.shadowBlur = 8;
+        ctx.strokeStyle = `${CYAN}0.55)`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(owX0, NBY);
+        ctx.bezierCurveTo(owCx, cy, owXe, cy, owXe, ENY);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(iwX0, NBY);
+        ctx.bezierCurveTo(iwCx, cy, iwXe, cy, iwXe, ENY);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = `${CYAN}0.25)`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(owXe, ENY);
+        ctx.lineTo(iwXe, ENY);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawEndpoint(ctx, x, y, label, pulseStrength, palette) {
+        const glowRadius = 60 + pulseStrength * 14;
+        const rg = ctx.createRadialGradient(x, y, 0, x, y, glowRadius);
+        rg.addColorStop(0, `${palette.glowCore}${0.2 + pulseStrength * 0.22})`);
+        rg.addColorStop(1, `${palette.glowCore}0)`);
+        ctx.beginPath();
+        ctx.arc(x, y, glowRadius, 0, Math.PI * 2);
+        ctx.fillStyle = rg;
+        ctx.fill();
+
+        const bw = ENDPOINT_BOX_W, bh = ENDPOINT_BOX_H, bx = x - bw / 2, by = y + ENDPOINT_BOX_OFFSET_Y;
+        ctx.save();
+        ctx.shadowColor = palette.shadow;
+        ctx.shadowBlur = 10;
+        roundRect(ctx, bx, by, bw, bh, 4);
+        ctx.fillStyle = `${palette.fill}0.18)`;
+        ctx.fill();
+        ctx.strokeStyle = `${palette.stroke}${0.85 + pulseStrength * 0.12})`;
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+        ctx.restore();
+        ctx.fillStyle = `${palette.text}0.96)`;
+        ctx.font = "bold 12px 'Courier New', monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(label, x, by + bh / 2);
+
+        ctx.save();
+        ctx.shadowColor = palette.shadow;
+        ctx.shadowBlur = 20 + pulseStrength * 18;
+        ctx.beginPath();
+        ctx.arc(x, y, 24, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0,8,22,${0.92 - pulseStrength * 0.18})`;
+        ctx.fill();
+        ctx.strokeStyle = `${palette.stroke}${0.9 + pulseStrength * 0.1})`;
+        ctx.lineWidth = 2 + pulseStrength * 1.5;
+        ctx.stroke();
+        ctx.restore();
+
+        if (pulseStrength > 0.01) {
+            ctx.save();
+            ctx.strokeStyle = `${palette.ring}${pulseStrength * 0.62})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x, y, 28 + pulseStrength * 10, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        ctx.fillStyle = `${palette.stroke}1)`;
+        ctx.font = "bold 14px 'Courier New', monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("✓", x, y);
+    }
+
+    function drawAbsorbEffects(ctx, image, effects, now) {
+        if (!image) return;
+        effects.forEach((effect) => {
+            const progress = clamp((now - effect.startedAt) / ABSORB_DURATION_MS, 0, 1);
+            const eased = easeOutCubic(progress);
+            const x = lerp(effect.startX, effect.targetX, eased);
+            const y = lerp(effect.startY, effect.targetY, eased);
+            const scale = lerp(1, 0.2, eased);
+            const alpha = 1 - eased;
+
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+            ctx.shadowColor = "#6edbff";
+            ctx.shadowBlur = 18 * alpha;
+            ctx.drawImage(image, -BALL_R, -BALL_R, BALL_R * 2, BALL_R * 2);
+            ctx.restore();
+        });
+    }
+
+    function drawScene(ctx, now, endpointPulseTimestamps) {
+        ctx.clearRect(0, 0, CW, CH);
+
+        ctx.beginPath();
+        ctx.moveTo(FLX, FTY);
+        ctx.lineTo(FRX, FTY);
+        ctx.lineTo(NRX, NTY);
+        ctx.lineTo(NLX, NTY);
+        ctx.closePath();
+        const fg = ctx.createLinearGradient(0, FTY, 0, NTY);
+        fg.addColorStop(0, `${CYAN}0.05)`);
+        fg.addColorStop(0.5, `${CYAN}0.12)`);
+        fg.addColorStop(1, `${CYAN}0.14)`);
+        ctx.fillStyle = fg;
+        ctx.fill();
+
+        const ng = ctx.createLinearGradient(0, NTY, 0, NBY);
+        ng.addColorStop(0, `${CYAN}0.14)`);
+        ng.addColorStop(1, `${CYAN}0.10)`);
+        ctx.fillStyle = ng;
+        ctx.fillRect(NLX, NTY, PR * 2, NBY - NTY);
+
+        drawArm(ctx, NLX, LEX, true);
+        drawArm(ctx, NRX, REX, false);
+
+        ctx.save();
+        ctx.shadowColor = "#00d4ff";
+        ctx.shadowBlur = 10;
+        ctx.strokeStyle = `${CYAN}0.65)`;
+        ctx.lineWidth = 2.5;
+        [[FLX, FTY, NLX, NTY], [FRX, FTY, NRX, NTY], [NLX, NTY, NLX, NBY], [NRX, NTY, NRX, NBY]].forEach(([x0, y0, x1, y1]) => {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x1, y1);
+            ctx.stroke();
+        });
+        ctx.strokeStyle = `${CYAN}0.28)`;
+        ctx.shadowBlur = 3;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(FLX, FTY);
+        ctx.lineTo(FRX, FTY);
+        ctx.stroke();
+        ctx.restore();
+
+        const leftPulseStrength = endpointPulseTimestamps.left
+            ? 1 - clamp((now - endpointPulseTimestamps.left) / PULSE_DURATION_MS, 0, 1)
+            : 0;
+        const rightPulseStrength = endpointPulseTimestamps.right
+            ? 1 - clamp((now - endpointPulseTimestamps.right) / PULSE_DURATION_MS, 0, 1)
+            : 0;
+
+        const fraudPalette = {
+            glowCore: "rgba(255,60,60,",
+            fill: "rgba(255,40,40,",
+            stroke: "rgba(255,72,72,",
+            text: "rgba(255,96,96,",
+            shadow: "#ff3b3b",
+            ring: "rgba(255,160,160,"
+        };
+        const safePalette = {
+            glowCore: "rgba(50,255,120,",
+            fill: "rgba(40,220,90,",
+            stroke: "rgba(84,255,144,",
+            text: "rgba(150,255,190,",
+            shadow: "#2bff7a",
+            ring: "rgba(170,255,200,"
+        };
+
+        drawEndpoint(ctx, LEX, ENY, "FRAUD", leftPulseStrength, fraudPalette);
+        drawEndpoint(ctx, REX, ENY, "SAFE", rightPulseStrength, safePalette);
+    }
+
+    function navigateToBucket(bucket) {
+        const target = `?alert_bucket=${encodeURIComponent(bucket)}`;
+
+        // Avoid reading parent/top URL from iframe context; cross-origin reads can fail
+        // even when same-page writes are allowed.
+        try {
+            window.top.location.assign(target);
+            return;
+        } catch (e) {}
+
+        try {
+            window.parent.location.assign(target);
+            return;
+        } catch (e) {}
+
+        try {
+            window.location.assign(target);
+        } catch (e) {
+            console.error("Bucket navigation failed", e);
+        }
+    }
+
+    function isInFraudZone(x, y) {
+        const leftCircle = Math.hypot(x - LEX, y - ENY) <= 26;
+        const boxX = LEX - ENDPOINT_BOX_W / 2;
+        const boxY = ENY + ENDPOINT_BOX_OFFSET_Y;
+        const leftBox = x >= boxX && x <= boxX + ENDPOINT_BOX_W && y >= boxY && y <= boxY + ENDPOINT_BOX_H;
+        return leftCircle || leftBox;
+    }
+
+    function isInSafeZone(x, y) {
+        const rightCircle = Math.hypot(x - REX, y - ENY) <= 26;
+        const boxX = REX - ENDPOINT_BOX_W / 2;
+        const boxY = ENY + ENDPOINT_BOX_OFFSET_Y;
+        const rightBox = x >= boxX && x <= boxX + ENDPOINT_BOX_W && y >= boxY && y <= boxY + ENDPOINT_BOX_H;
+        return rightCircle || rightBox;
+    }
+
+    function setupCanvas() {
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = CW * dpr;
+        canvas.height = CH * dpr;
+        const ctx = canvas.getContext("2d");
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return ctx;
+    }
+
+    const ctx = setupCanvas();
+    const endpointPulse = { left: 0, right: 0 };
+    const ballBodies = [];
+    let absorbEffects = [];
+
+    const gmailImage = new Image();
+    gmailImage.src = "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico";
+
+    let engine = null;
+    let runner = null;
+    let animationId = null;
+    let spawnInterval = null;
+    const seedTimeouts = [];
+    let isVisible = true;
+
+    function stopSimulation() {
+        seedTimeouts.forEach((t) => clearTimeout(t));
+        seedTimeouts.length = 0;
+        if (spawnInterval) clearInterval(spawnInterval);
+        if (animationId) cancelAnimationFrame(animationId);
+
+        if (runner) Matter.Runner.stop(runner);
+        if (engine) {
+            Matter.World.clear(engine.world, false);
+            Matter.Engine.clear(engine);
+        }
+
+        runner = null;
+        engine = null;
+        absorbEffects = [];
+        ballBodies.length = 0;
+    }
+
+    function startSimulation() {
+        if (engine || !isVisible || document.hidden) return;
+
+        const { Engine, Runner, World, Bodies, Body, Events } = Matter;
+
+        engine = Engine.create({ gravity: { x: 0, y: 0.25 } });
+        engine.positionIterations = 8;
+        engine.velocityIterations = 6;
+
+        World.add(engine.world, [...createFunnelWalls(), ...createSinkSensors()]);
+
+        const spawnBallAtIndex = (index) => {
+            const laneOffset = SPAWN_BATCH_SIZE === 1 ? 0 : (index - (SPAWN_BATCH_SIZE - 1) / 2) * (BALL_R * 2.6);
+            const startX = CX + laneOffset + (Math.random() - 0.5) * 10;
+            const route = index < SPAWN_BATCH_SIZE / 2 ? -1 : 1;
+            const ball = Bodies.circle(startX, -32, BALL_R, {
+                restitution: 0.1,
+                friction: 0.02,
+                frictionAir: 0.0038,
+                density: 0.001,
+                label: "email-ball",
+                render: { visible: false }
+            });
+            ball.plugin.route = route;
+            World.add(engine.world, ball);
+            ballBodies.push(ball);
+        };
+
+        const scheduleSequence = () => {
+            for (let index = 0; index < SPAWN_BATCH_SIZE; index++) {
+                seedTimeouts.push(setTimeout(() => spawnBallAtIndex(index), index * SPAWN_SEQUENCE_GAP_MS));
+            }
+        };
+
+        scheduleSequence();
+        spawnInterval = setInterval(scheduleSequence, SPAWN_CYCLE_MS);
+
+        Events.on(engine, "beforeUpdate", () => {
+            ballBodies.forEach((body) => {
+                const x = body.position.x;
+                const y = body.position.y;
+
+                if (y > BRANCH_LOCK_Y && Math.abs(x - CX) > BRANCH_LOCK_MIN_X_OFFSET) {
+                    const branchSide = x < CX ? -1 : 1;
+                    if (!body.plugin.routeLocked && branchSide !== (body.plugin.route || 1)) {
+                        body.plugin.route = branchSide;
+                        body.plugin.routeLocked = true;
+                    }
+                }
+
+                if (y > NBY - 16 && y < ENY + 20) {
+                    const progress = clamp((y - NBY) / (ENY - NBY), 0, 1);
+                    const route = body.plugin.route || 1;
+                    const endpointX = route < 0 ? LEX : REX;
+                    const innerStartX = CX + route * (AR * 0.35);
+                    const targetX = lerp(innerStartX, endpointX, Math.pow(progress, 0.72));
+                    const horizontalError = targetX - x;
+                    const horizontalForce = clamp(horizontalError * ROUTE_FORCE_SCALE, -0.00022, 0.00022);
+                    Body.applyForce(body, body.position, { x: horizontalForce, y: 0.00001 });
+                }
+            });
+        });
+
+        Events.on(engine, "collisionStart", (event) => {
+            event.pairs.forEach(({ bodyA, bodyB }) => {
+                const isBallA = bodyA.label === "email-ball";
+                const isBallB = bodyB.label === "email-ball";
+                const isSinkA = ["left-sink", "right-sink", "left-box-sink", "right-box-sink"].includes(bodyA.label);
+                const isSinkB = ["left-sink", "right-sink", "left-box-sink", "right-box-sink"].includes(bodyB.label);
+
+                if ((isBallA && isSinkB) || (isBallB && isSinkA)) {
+                    const ball = isBallA ? bodyA : bodyB;
+                    const sink = isSinkA ? bodyA : bodyB;
+                    const side = sink.label.startsWith("left") ? "left" : "right";
+                    const targetX = side === "left" ? LEX : REX;
+
+                    absorbEffects.push({
+                        startX: ball.position.x,
+                        startY: ball.position.y,
+                        targetX,
+                        targetY: ENY,
+                        startedAt: performance.now()
+                    });
+                    endpointPulse[side] = performance.now();
+                    Matter.World.remove(engine.world, ball);
+                    const idx = ballBodies.findIndex((b) => b.id === ball.id);
+                    if (idx >= 0) ballBodies.splice(idx, 1);
+                }
+            });
+        });
+
+        runner = Runner.create();
+        Runner.run(runner, engine);
+
+        const animate = () => {
+            const now = performance.now();
+            absorbEffects = absorbEffects.filter((effect) => now - effect.startedAt < ABSORB_DURATION_MS);
+
+            drawScene(ctx, now, endpointPulse);
+
+            ballBodies.forEach((body) => {
+                const x = body.position.x;
+                const y = body.position.y;
+                if (y <= -50 || y >= CH + 50) return;
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(body.angle);
+                ctx.shadowColor = "#4285F4";
+                ctx.shadowBlur = 15;
+                if (gmailImage.complete && gmailImage.naturalWidth > 0) {
+                    ctx.drawImage(gmailImage, -BALL_R, -BALL_R, BALL_R * 2, BALL_R * 2);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, BALL_R, 0, Math.PI * 2);
+                    ctx.fillStyle = "rgba(180,220,255,0.95)";
+                    ctx.fill();
+                }
+                ctx.restore();
+            });
+
+            drawAbsorbEffects(ctx, gmailImage.complete ? gmailImage : null, absorbEffects, now);
+            animationId = requestAnimationFrame(animate);
+        };
+
+        animate();
+    }
+
+    canvas.addEventListener("click", (event) => {
+        const rect = canvas.getBoundingClientRect();
+        const sx = CW / rect.width;
+        const sy = CH / rect.height;
+        const x = (event.clientX - rect.left) * sx;
+        const y = (event.clientY - rect.top) * sy;
+
+        if (isInFraudZone(x, y)) {
+            navigateToBucket("fraud");
+            return;
+        }
+        if (isInSafeZone(x, y)) {
+            navigateToBucket("safe");
+        }
+    });
+
+    canvas.addEventListener("mousemove", (event) => {
+        const rect = canvas.getBoundingClientRect();
+        const sx = CW / rect.width;
+        const sy = CH / rect.height;
+        const x = (event.clientX - rect.left) * sx;
+        const y = (event.clientY - rect.top) * sy;
+        canvas.style.cursor = (isInFraudZone(x, y) || isInSafeZone(x, y)) ? "pointer" : "default";
+    });
+
+    const observer = new IntersectionObserver(([entry]) => {
+        isVisible = entry.isIntersecting && entry.intersectionRatio >= 0.2;
+        if (isVisible) startSimulation();
+        else stopSimulation();
+    }, { threshold: 0.2 });
+    observer.observe(root);
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) stopSimulation();
+        else if (isVisible) startSimulation();
+    });
+
+    drawScene(ctx, performance.now(), endpointPulse);
+    startSimulation();
+})();
+</script>
+                """,
+                height=760,
+                scrolling=False,
+        )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1189,6 +1820,61 @@ if _is_detail_page:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# BUCKET PAGE — dedicated page for funnel outputs
+# ══════════════════════════════════════════════════════════════════════════════
+if _is_bucket_page:
+    all_alerts_bucket = fetch_alerts(50)
+
+    if st.button("← Back to Alerts Dashboard", key=f"back_bucket_{_alert_bucket}"):
+        if "alert_bucket" in st.query_params:
+            del st.query_params["alert_bucket"]
+        st.rerun()
+
+    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+
+    if _alert_bucket == "fraud":
+        allowed_bands = {"HIGH", "MEDIUM"}
+        section_title = "High / Medium Alerts"
+        section_hint = "Showing fraud-routed alerts from the funnel"
+        empty_icon = "🚫"
+        empty_msg = "No High/Medium alerts available right now"
+        key_prefix = "bucket_fraud"
+    else:
+        allowed_bands = {"LOW"}
+        section_title = "Low Alerts"
+        section_hint = "Showing safe-routed alerts from the funnel"
+        empty_icon = "✅"
+        empty_msg = "No Low alerts available right now"
+        key_prefix = "bucket_safe"
+
+    filtered_entries = []
+    for idx, entry in enumerate(all_alerts_bucket):
+        rec = entry.get("alert", {})
+        band = (rec.get("risk_band") or "LOW").upper()
+        if band in allowed_bands:
+            filtered_entries.append((idx, entry))
+
+    st.markdown(f"""
+    <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:20px;padding:0 8px;font-family:var(--font-ui);">
+      <b style="color:var(--text-main);font-weight:700;">{section_title} ({len(filtered_entries)})</b><br/>
+      {section_hint}
+    </div>
+    """, unsafe_allow_html=True)
+
+    if not filtered_entries:
+        st.markdown(f"""
+        <div class="glass-card-wrapper" style="text-align:center;padding:48px 28px;">
+          <div style="font-size:3rem;margin-bottom:14px;opacity:0.35">{empty_icon}</div>
+          <div style="font-size:1.1rem;color:var(--text-muted);font-family:var(--font-ui);font-weight:600;">{empty_msg}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        render_alert_list(filtered_entries, key_prefix)
+
+    st.stop()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # TABS  (only reached on the homepage)
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
@@ -1205,80 +1891,23 @@ tab_alerts, tab_demo, tab_email, tab_url, tab_full = st.tabs([
 # TAB 1 — ALERTS DASHBOARD
 # ─────────────────────────────────────────────────────────────────────────────
 with tab_alerts:
-    # Fetch alerts for the list view (detail view is handled above via st.stop())
-    all_alerts = fetch_alerts(50)
-
     st.markdown("""
     <div style="text-align:center;padding:20px 0 32px">
       <div style="font-size:1.9rem;font-weight:700;color:var(--text-main);margin-bottom:10px;font-family:var(--font-display);letter-spacing:2px;">Live Alerts Dashboard</div>
-      <div style="font-size:0.9rem;color:var(--text-muted);font-family:var(--font-ui);">Real-time fraud detection from monitored email sources</div>
+      <div style="font-size:0.9rem;color:var(--text-muted);font-family:var(--font-ui);">Use the funnel output to route to Fraud (High + Medium) or Safe (Low) alerts</div>
     </div>
     """, unsafe_allow_html=True)
 
-    if not all_alerts:
-        st.markdown("""
-        <div class="glass-card-wrapper" style="text-align:center;padding:56px 28px;">
-          <div style="font-size:3.5rem;margin-bottom:20px;opacity:0.25">📭</div>
-          <div style="font-size:1.2rem;color:var(--text-muted);font-family:var(--font-ui);font-weight:600;">No alerts yet</div>
-          <div style="font-size:0.85rem;color:var(--text-faint);margin-top:10px;font-family:var(--font-ui);">Alerts will appear here when the IMAP poller detects suspicious emails</div>
+    render_email_funnel_component()
+
+    st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
+    st.markdown("""
+        <div class="glass-card-wrapper" style="text-align:center;padding:42px 26px;">
+            <div style="font-size:2.6rem;margin-bottom:12px;opacity:0.4">🧭</div>
+            <div style="font-size:1.1rem;color:var(--text-main);font-family:var(--font-ui);font-weight:600;">Select a route from the funnel</div>
+            <div style="font-size:0.85rem;color:var(--text-faint);margin-top:10px;font-family:var(--font-ui);">Click FRAUD for High + Medium alerts, or SAFE for Low alerts.</div>
         </div>
         """, unsafe_allow_html=True)
-    else:
-        st.markdown(f"""
-        <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:20px;padding:0 8px;font-family:var(--font-ui);">
-          Showing <b style="color:var(--text-accent);font-weight:700;">{len(all_alerts)}</b> most recent alerts · Click any alert to view detailed analysis
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Display alerts as clickable cards
-        for idx, entry in enumerate(all_alerts):
-            rec = entry.get("alert", {})
-            ts = entry.get("received_at", "")
-            subj = rec.get("subject") or "(no subject)"
-            sender = rec.get("sender") or "(unknown)"
-            band = rec.get("risk_band") or "LOW"
-            score = rec.get("risk_score") or 0
-
-            color = _BAND_COLOR.get(band, "#888")
-            bg = _BAND_BG.get(band, "rgba(100,100,100,0.05)")
-            icon = _BAND_ICON.get(band, "❓")
-
-            # Create container with card and button side by side
-            col1, col2 = st.columns([7, 1])
-
-            with col1:
-                card_html = f"""
-                <div style="
-                    background:{bg};
-                    border:1px solid {color}33;
-                    border-radius:12px 0 0 12px;
-                    padding:16px 20px;
-                    ">
-                  <div style="display:flex;align-items:center;gap:16px;">
-                    <div style="font-size:2rem;line-height:1">{icon}</div>
-                    <div style="flex:1;">
-                      <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
-                        <span style="background:{color}22;color:{color};padding:4px 12px;border-radius:6px;font-size:0.7rem;font-weight:700;letter-spacing:0.5px">{band}</span>
-                        <span style="color:{color};font-size:1.1rem;font-weight:700">{score:.0f}/100</span>
-                        <span style="color:#334155;font-size:1.2rem">·</span>
-                        <span style="color:#e2e8f0;font-size:0.95rem;font-weight:600">{subj}</span>
-                      </div>
-                      <div style="font-size:0.8rem;color:#64748b;">
-                        <span style="color:#94a3b8">From:</span> {sender} &nbsp;·&nbsp; <span style="color:#94a3b8">At:</span> {ts}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                """
-                st.markdown(card_html, unsafe_allow_html=True)
-
-            with col2:
-                st.markdown("<div style='height:25px'></div>", unsafe_allow_html=True)
-                if st.button("▶ View", key=f"alert_btn_{idx}", type="primary", use_container_width=True):
-                    st.query_params["alert_id"] = str(idx)
-                    st.rerun()
-
-            st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB 2 — DEMO ATTACK
