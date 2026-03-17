@@ -338,23 +338,56 @@ const features = [
   "Fusion Model", "Campaign Graph", "SHAP Explainer"
 ];
 
+// Frame controller: continuously invalidates the canvas only while the hero is visible
+function FrameController({ isVisible }) {
+  useFrame(({ invalidate }) => {
+    if (isVisible) invalidate();
+  });
+  return null;
+}
+
 export default function HeroSection() {
+  const scrollRef = useRef(null);
+  const [heroVisible, setHeroVisible] = useState(true);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setHeroVisible(entry.isIntersecting);
+      },
+      { threshold: 0 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="relative w-full overflow-hidden bg-black">
-      {/* Scroll height driver */}
-      <div className="scroll-height h-[400vh]" />
+      {/* Scroll height driver — observed for visibility */}
+      <div ref={scrollRef} className="scroll-height h-[400vh]" />
 
-      {/* Fixed Background Canvas */}
-      <div className="fixed inset-0 z-0 h-screen w-full pointer-events-none">
-        <Canvas shadows gl={{ antialias: true }}>
+      {/* Fixed Background Canvas — hidden when scrolled past hero */}
+      <div
+        className="fixed inset-0 z-0 h-screen w-full pointer-events-none"
+        style={{ display: heroVisible ? 'block' : 'none' }}
+      >
+        <Canvas shadows gl={{ antialias: true }} frameloop="demand">
+          <FrameController isVisible={heroVisible} />
           <React.Suspense fallback={null}>
             <Experience />
           </React.Suspense>
         </Canvas>
       </div>
 
-      {/* HTML UI Overlay */}
-      <div className="fixed inset-0 z-10 flex flex-col items-center justify-center pointer-events-none p-10">
+      {/* HTML UI Overlay — also hidden when hero is out of view */}
+      <div
+        className="fixed inset-0 z-10 flex flex-col items-center justify-center pointer-events-none p-10"
+        style={{ display: heroVisible ? 'flex' : 'none' }}
+      >
 
         {/* Phase 1 Title */}
         <div className="hero-title opacity-0 translate-y-10 text-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -389,7 +422,10 @@ export default function HeroSection() {
       </div>
 
       {/* Scroll indicator */}
-      <div className="scroll-indicator fixed bottom-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center">
+      <div
+        className="scroll-indicator fixed bottom-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center"
+        style={{ display: heroVisible ? 'flex' : 'none' }}
+      >
         <span className="text-[10px] uppercase tracking-[0.5em] text-blue-300/40 mb-2">Initialize Scroll</span>
         <div className="w-[1px] h-12 bg-gradient-to-b from-blue-400 to-transparent animate-bounce" />
       </div>
