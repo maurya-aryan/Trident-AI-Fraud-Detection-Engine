@@ -10,30 +10,38 @@ gsap.registerPlugin(ScrollTrigger);
 
 // --- 3D Components ---
 
-function Trident({ tl }) {
+function Trident() {
   const { scene } = useGLTF('/assets/gold_trident.glb');
   const tridentRef = useRef();
 
-  useFrame((state) => {
+  // GLB deep analysis: Node matrices contain hidden transforms:
+  // - "handle" node: scale ~6.66x, translation (70, 158, 0)
+  // - "Plane" node: scale ~66.6x, translation (74, 389, 0)
+  // Actual rendered bounding box is ~750 units, NOT the raw 11 units from accessors.
+  // To fit within ~6 world units: 6 / 750 ≈ 0.008
+  const TRIDENT_SCALE = 0.014;
+
+  useFrame(() => {
     if (tridentRef.current) {
-      const t = state.clock.getElapsedTime();
       tridentRef.current.rotation.y += 0.005;
-      // Fixed in place, only gentle bobbing
-      tridentRef.current.position.y = Math.sin(t * 2) * 0.05;
     }
   });
 
   return (
     <group ref={tridentRef} position={[0, 0, 0]}>
+      {/* Dedicated spotlight to illuminate the gold trident */}
+      <pointLight color="#ffaa44" intensity={20} distance={20} decay={2} position={[0, 3, 5]} />
+      <pointLight color="#ff4444" intensity={10} distance={20} decay={2} position={[0, -3, -5]} />
       <Center>
         <primitive
           object={scene}
-          scale={0.4} // Scaled down the Trident to fit perfectly on screen at (0,0,0)
+          scale={TRIDENT_SCALE}
         />
       </Center>
     </group>
   );
 }
+
 
 function ServerCity() {
   const obj = useLoader(OBJLoader, 'https://raw.githubusercontent.com/iondrimba/images/master/buildings.obj');
@@ -179,9 +187,9 @@ function Experience() {
       <PerspectiveCamera ref={cameraRef} makeDefault position={[0, 0, 30]} fov={30} />
       <color attach="background" args={['#020000']} /> {/* Very dark red/black background */}
 
-      {/* Atmosphere - matching the crimson vibe */}
-      <fog attach="fog" args={['#050000', 20, 150]} />
-      <ambientLight color="#220000" intensity={1} />
+      {/* Atmosphere - fog starts at 50 so trident at distance 30 is NOT fogged */}
+      <fog attach="fog" args={['#050000', 50, 200]} />
+      <ambientLight color="#331111" intensity={2} />
 
       {/* Main highlight coming from far right/top */}
       <spotLight color="#ff0000" intensity={2} position={[200, 100, 100]} castShadow angle={0.5} penumbra={1} />
@@ -201,7 +209,7 @@ function Experience() {
         <meshStandardMaterial color="#000000" metalness={0} emissive="#000000" roughness={1} />
       </mesh>
 
-      <Trident tl={tl} />
+      <Trident />
       <React.Suspense fallback={null}>
         <ServerCity />
       </React.Suspense>
@@ -236,10 +244,10 @@ export default function HeroSection() {
       </div>
 
       {/* HTML UI Overlay */}
-      <div className="fixed inset-0 z-10 flex flex-col items-center justify-center pointer-events-none p-10 mt-32">
+      <div className="fixed inset-0 z-10 flex flex-col items-center justify-center pointer-events-none p-10">
 
         {/* Phase 1 Title */}
-        <div className="hero-title opacity-0 translate-y-10 text-center absolute top-1/2 -translate-y-1/2">
+        <div className="hero-title opacity-0 translate-y-10 text-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
           <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white uppercase italic">
             Trident <span className="text-red-600">AI</span>
           </h1>
