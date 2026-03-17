@@ -4,9 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
-import AboutSection from './components/AboutSection';
 import DetectionSection from './components/DetectionSection';
-import PipelineSection from './components/PipelineSection';
 import TerminalSection from './components/TerminalSection';
 import EndSection from './components/EndSection';
 
@@ -27,20 +25,15 @@ function App() {
         <div id="architecture">
           <HeroSection />
         </div>
-        
-        <AboutSection />
 
         <div id="detection">
           <DetectionSection />
-        </div>
-        
-        <div id="pipeline">
-          <PipelineSection />
         </div>
 
         <div id="terminal">
           <TerminalSection />
         </div>
+
 
         <EndSection />
       </main>
