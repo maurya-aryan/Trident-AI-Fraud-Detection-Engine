@@ -1,12 +1,111 @@
 import React, { useRef, useMemo, useEffect, useState } from 'react';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
-import { useGLTF, PerspectiveCamera, Environment, ContactShadows, Center } from '@react-three/drei';
+import { useGLTF, PerspectiveCamera, Environment, ContactShadows, Center, Clouds as DreiClouds, Cloud } from '@react-three/drei';
 import * as THREE from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
+
+// --- Rain Component (adapted from user's example) ---
+
+function Rain({ count = 3000 }) {
+  const meshRef = useRef();
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+
+  const particles = useMemo(() => {
+    const temp = [];
+    for (let i = 0; i < count; i++) {
+      temp.push({
+        x: (Math.random() - 0.5) * 200,
+        y: Math.random() * 80 + 20,
+        z: (Math.random() - 0.5) * 200 - 50,
+        speed: Math.random() * 0.3 + 0.15,
+      });
+    }
+    return temp;
+  }, [count]);
+
+  useFrame(() => {
+    if (!meshRef.current) return;
+    particles.forEach((particle, i) => {
+      particle.y -= particle.speed;
+      if (particle.y < -100) {
+        particle.y = 80;
+      }
+      dummy.position.set(particle.x, particle.y, particle.z);
+      dummy.updateMatrix();
+      meshRef.current.setMatrixAt(i, dummy.matrix);
+    });
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  });
+
+  return (
+    <instancedMesh ref={meshRef} args={[null, null, count]}>
+      <cylinderGeometry args={[0.008, 0.008, 0.6, 4]} />
+      <meshBasicMaterial color="#6699cc" transparent opacity={0.35} />
+    </instancedMesh>
+  );
+}
+
+// --- Storm Component (clouds + lightning) ---
+
+function Storm() {
+  const lightningLightRef = useRef();
+  const lightningActive = useRef(false);
+
+  useFrame(() => {
+    // Lightning flash – random bursts illuminate the scene
+    if (Math.random() < 0.003 && !lightningActive.current) {
+      lightningActive.current = true;
+
+      if (lightningLightRef.current) {
+        const randomX = (Math.random() - 0.5) * 60;
+        lightningLightRef.current.position.x = randomX;
+        lightningLightRef.current.intensity = 120;
+
+        setTimeout(() => {
+          if (lightningLightRef.current)
+            lightningLightRef.current.intensity = 0;
+          lightningActive.current = false;
+        }, 350);
+      }
+    }
+  });
+
+  return (
+    <group>
+      {/* Storm clouds above the Trident */}
+      <DreiClouds material={THREE.MeshLambertMaterial}>
+        <Cloud segments={60} bounds={[30, 4, 8]} volume={12} color="#3a4a5a" fade={100} speed={0.15} opacity={0.7} position={[-5, 12, -10]} />
+        <Cloud segments={60} bounds={[30, 4, 8]} volume={12} color="#4a5a6a" fade={100} speed={0.12} opacity={0.6} position={[8, 10, -5]} />
+        <Cloud segments={60} bounds={[25, 3, 6]} volume={10} color="#2a3a4a" fade={80} speed={0.2} opacity={0.8} position={[0, 14, -15]} />
+        <Cloud segments={40} bounds={[20, 3, 5]} volume={8} color="#3a4a5a" fade={80} speed={0.18} opacity={0.5} position={[-10, 11, -20]} />
+        <Cloud segments={40} bounds={[22, 3, 5]} volume={8} color="#4a5a6a" fade={80} speed={0.22} opacity={0.6} position={[12, 13, -8]} />
+      </DreiClouds>
+
+      {/* Clouds over the city area too */}
+      <DreiClouds material={THREE.MeshLambertMaterial}>
+        <Cloud segments={50} bounds={[60, 5, 30]} volume={15} color="#2a3545" fade={120} speed={0.1} opacity={0.5} position={[-30, -55, -120]} />
+        <Cloud segments={50} bounds={[60, 5, 30]} volume={15} color="#3a4555" fade={120} speed={0.08} opacity={0.4} position={[10, -50, -140]} />
+      </DreiClouds>
+
+      <Rain count={3000} />
+
+      {/* Lightning light - warm yellow flash that illuminates the entire scene including buildings */}
+      <pointLight
+        ref={lightningLightRef}
+        position={[0, 15, -30]}
+        intensity={0}
+        color="#e6d8b3"
+        distance={250}
+        decay={0.5}
+        castShadow
+      />
+    </group>
+  );
+}
 
 // --- 3D Components ---
 
@@ -18,7 +117,6 @@ function Trident() {
   // - "handle" node: scale ~6.66x, translation (70, 158, 0)
   // - "Plane" node: scale ~66.6x, translation (74, 389, 0)
   // Actual rendered bounding box is ~750 units, NOT the raw 11 units from accessors.
-  // To fit within ~6 world units: 6 / 750 ≈ 0.008
   const TRIDENT_SCALE = 0.014;
 
   useFrame(() => {
@@ -29,9 +127,9 @@ function Trident() {
 
   return (
     <group ref={tridentRef} position={[0, 0, 0]}>
-      {/* Dedicated spotlight to illuminate the gold trident */}
-      <pointLight color="#ffaa44" intensity={20} distance={20} decay={2} position={[0, 3, 5]} />
-      <pointLight color="#ff4444" intensity={10} distance={20} decay={2} position={[0, -3, -5]} />
+      {/* Dedicated warm golden light for the trident */}
+      <pointLight color="#ffcc66" intensity={25} distance={20} decay={2} position={[0, 3, 5]} />
+      <pointLight color="#4488ff" intensity={8} distance={20} decay={2} position={[0, -3, -5]} />
       <Center>
         <primitive
           object={scene}
@@ -41,7 +139,6 @@ function Trident() {
     </group>
   );
 }
-
 
 function ServerCity() {
   const obj = useLoader(OBJLoader, 'https://raw.githubusercontent.com/iondrimba/images/master/buildings.obj');
@@ -62,12 +159,13 @@ function ServerCity() {
 
     const gridSize = 40;
     const boxSize = 3;
-    // Visually improved building materials: dark, reflective, with a faint red emissive
+    // Obsidian blue base + warm yellow emissive for lit windows effect
     const meshParams = {
-      color: '#050505',
-      metalness: 0.8,
-      emissive: '#1a0000',
-      roughness: 0.2,
+      color: '#0a0a1a',
+      metalness: 0.7,
+      emissive: '#ffcc44',
+      emissiveIntensity: 0.08,
+      roughness: 0.3,
     };
     const max = 0.009;
     const min = 0.001;
@@ -147,11 +245,11 @@ function Experience() {
         duration: 0.1,
       }, 0.35);
 
-      // Fixed Zoom level so it's not too far inside
+      // Zoom into the city skyline
       newTl.to(cameraRef.current.position, {
         x: 0,
-        y: -70, // Just above the skyline
-        z: -10, // Kept back out of the dense center mass
+        y: -70,
+        z: -10,
         duration: 0.45,
         ease: "power2.inOut"
       }, 0.35);
@@ -162,7 +260,7 @@ function Experience() {
       }, 0.35);
 
       newTl.to(cameraRef.current.rotation, {
-        x: -0.15, // Look slightly downwards at the city
+        x: -0.15,
         duration: 0.45,
         ease: "power2.inOut"
       }, 0.35);
@@ -185,37 +283,48 @@ function Experience() {
   return (
     <>
       <PerspectiveCamera ref={cameraRef} makeDefault position={[0, 0, 30]} fov={30} />
-      <color attach="background" args={['#020000']} /> {/* Very dark red/black background */}
 
-      {/* Atmosphere - fog starts at 50 so trident at distance 30 is NOT fogged */}
-      <fog attach="fog" args={['#050000', 50, 200]} />
-      <ambientLight color="#331111" intensity={2} />
+      {/* Deep midnight / obsidian blue background */}
+      <color attach="background" args={['#020a14']} />
 
-      {/* Main highlight coming from far right/top */}
-      <spotLight color="#ff0000" intensity={2} position={[200, 100, 100]} castShadow angle={0.5} penumbra={1} />
+      {/* Fog: midnight blue atmosphere */}
+      <fog attach="fog" args={['#020a14', 50, 220]} />
 
-      {/* Central glow simulating radiation out of the Trident / core */}
-      <pointLight color="#ff1111" intensity={15} position={[0, -10, -50]} distance={150} decay={2} />
+      {/* Ambient: very subtle blue-tinted fill */}
+      <ambientLight color="#112233" intensity={1.5} />
 
-      {/* Background Shape */}
+      {/* Night yellow streetlight feel - lights from above the city */}
+      <spotLight color="#ffcc44" intensity={3} position={[60, -40, -100]} angle={0.6} penumbra={1} castShadow />
+      <spotLight color="#ffaa33" intensity={2} position={[-40, -50, -130]} angle={0.5} penumbra={1} />
+
+      {/* Cool blue moonlight from the side */}
+      <directionalLight color="#4488cc" intensity={1.5} position={[-50, 30, 20]} />
+
+      {/* Subtle warm glow near the city center */}
+      <pointLight color="#ffcc44" intensity={8} position={[-30, -75, -120]} distance={100} decay={2} />
+      <pointLight color="#ffaa22" intensity={6} position={[30, -80, -140]} distance={80} decay={2} />
+
+      {/* Background Shape - deep midnight blue */}
       <mesh position={[0, -50, -250]}>
         <planeGeometry args={[400, 100]} />
-        <meshPhysicalMaterial color="#050000" />
+        <meshPhysicalMaterial color="#020a14" />
       </mesh>
 
-      {/* Floor */}
+      {/* Floor - dark reflective */}
       <mesh position={[0, -90, -90]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[400, 400]} />
-        <meshStandardMaterial color="#000000" metalness={0} emissive="#000000" roughness={1} />
+        <meshStandardMaterial color="#050a15" metalness={0.3} emissive="#010308" roughness={0.8} />
       </mesh>
 
       <Trident />
+      <Storm />
+
       <React.Suspense fallback={null}>
         <ServerCity />
       </React.Suspense>
 
       <Environment preset="night" />
-      <ContactShadows position={[0, -2, 0]} opacity={0.6} scale={60} blur={2} far={15} color="#000" />
+      <ContactShadows position={[0, -2, 0]} opacity={0.5} scale={60} blur={2} far={15} color="#001122" />
     </>
   );
 }
@@ -249,9 +358,9 @@ export default function HeroSection() {
         {/* Phase 1 Title */}
         <div className="hero-title opacity-0 translate-y-10 text-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
           <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white uppercase italic">
-            Trident <span className="text-red-600">AI</span>
+            Trident <span className="text-blue-400">AI</span>
           </h1>
-          <p className="text-xl md:text-2xl text-gray-400 font-light tracking-[0.3em] uppercase mt-4">
+          <p className="text-xl md:text-2xl text-blue-200/60 font-light tracking-[0.3em] uppercase mt-4">
             Fraud Detection Engine
           </p>
         </div>
@@ -261,16 +370,16 @@ export default function HeroSection() {
           {features.map((feature, i) => (
             <div
               key={i}
-              className="feature-card opacity-0 scale-90 p-8 border border-white/10 bg-white/5 backdrop-blur-xl rounded-2xl flex flex-col justify-between group hover:border-red-500/50 transition-colors duration-500 pointer-events-auto cursor-pointer"
+              className="feature-card opacity-0 scale-90 p-8 border border-blue-400/10 bg-blue-950/20 backdrop-blur-xl rounded-2xl flex flex-col justify-between group hover:border-blue-400/40 transition-colors duration-500 pointer-events-auto cursor-pointer"
             >
-              <div className="mb-4 text-xs font-mono text-gray-500 uppercase tracking-widest flex justify-between items-center">
+              <div className="mb-4 text-xs font-mono text-blue-300/50 uppercase tracking-widest flex justify-between items-center">
                 <span>Module {String(i + 1).padStart(2, '0')}</span>
-                <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
               </div>
               <h3 className="text-2xl font-bold text-white mb-2 leading-tight">
                 {feature}
               </h3>
-              <p className="text-sm text-gray-400 font-light leading-relaxed">
+              <p className="text-sm text-blue-200/50 font-light leading-relaxed">
                 Advanced multi-modal signal processing for {feature.toLowerCase()} insights.
               </p>
             </div>
@@ -280,10 +389,9 @@ export default function HeroSection() {
 
       {/* Scroll indicator */}
       <div className="scroll-indicator fixed bottom-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center">
-        <span className="text-[10px] uppercase tracking-[0.5em] text-gray-500 mb-2">Initialize Scroll</span>
-        <div className="w-[1px] h-12 bg-gradient-to-b from-red-600 to-transparent animate-bounce" />
+        <span className="text-[10px] uppercase tracking-[0.5em] text-blue-300/40 mb-2">Initialize Scroll</span>
+        <div className="w-[1px] h-12 bg-gradient-to-b from-blue-400 to-transparent animate-bounce" />
       </div>
     </div>
   );
 }
-
