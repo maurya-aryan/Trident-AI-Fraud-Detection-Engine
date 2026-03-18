@@ -14,15 +14,14 @@ const MODULE_LABELS = {
   shap_explainer: "SHAP Explainer"
 };
 
-// ── SVG Risk Gauge ────────────────────────────────────────────────────────────
-function RiskGauge({ score, band }) {
+// ── SVG Risk Arc ────────────────────────────────────────────────────────────
+function RiskArc({ score, band }) {
   const color = BAND_COLOR[band] || "#888";
-  const radius = 70;
-  const stroke = 10;
-  const cx = 90, cy = 90;
-  const startAngle = -210;
-  const sweepAngle = 240;
-  const angle = startAngle + (sweepAngle * score) / 100;
+  const radius = 60;
+  const stroke = 8;
+  const cx = 80, cy = 80;
+  const startAngle = 140;
+  const sweepAngle = 260; // Progress arc sweep
   const toRad = (deg) => (deg * Math.PI) / 180;
 
   const arcPath = (start, sweep) => {
@@ -36,55 +35,54 @@ function RiskGauge({ score, band }) {
     return `M ${x1} ${y1} A ${radius} ${radius} 0 ${large} 1 ${x2} ${y2}`;
   };
 
-  const needleX = cx + (radius - 4) * Math.cos(toRad(angle));
-  const needleY = cy + (radius - 4) * Math.sin(toRad(angle));
-
   return (
-    <svg width={180} height={130} style={{ display: "block", margin: "0 auto" }}>
-      <path d={arcPath(startAngle, sweepAngle)} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={stroke} strokeLinecap="round" />
-      <path d={arcPath(startAngle, sweepAngle * score / 100)} fill="none" stroke={color}
-        strokeWidth={stroke} strokeLinecap="round"
-        style={{ filter: `drop-shadow(0 0 6px ${color}88)` }} />
-      <circle cx={needleX} cy={needleY} r={5} fill={color} style={{ filter: `drop-shadow(0 0 8px ${color})` }} />
-      <text x={cx} y={cy + 6} textAnchor="middle" fill={color}
-        fontSize={24} fontWeight={700} fontFamily="'Courier New',monospace">
-        {score.toFixed(0)}
-      </text>
-      <text x={cx} y={cy + 22} textAnchor="middle" fill="rgba(223,240,251,0.4)"
-        fontSize={9} letterSpacing={2} fontFamily="'Courier New',monospace">
-        RISK SCORE
-      </text>
-    </svg>
+    <div style={{ position: "relative", width: 160, height: 130, margin: "0 auto" }}>
+      <svg width={160} height={160} viewBox="0 0 160 160">
+        {/* Background track */}
+        <path d={arcPath(140, 260)} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={stroke} strokeLinecap="round" />
+        {/* Progress Arc */}
+        <path d={arcPath(140, (260 * score) / 100)} fill="none" stroke={color}
+          strokeWidth={stroke} strokeLinecap="round"
+          style={{ filter: `drop-shadow(0 0 8px ${color}66)`, transition: "stroke-dasharray 1s ease" }} />
+      </svg>
+      <div style={{
+        position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+        textAlign: "center", marginTop: 5
+      }}>
+        <div style={{ fontSize: "2.2rem", fontWeight: 800, color: "#fff", lineHeight: 1 }}>{score.toFixed(0)}</div>
+        <div style={{ fontSize: "0.7rem", color: "rgba(223,240,251,0.4)", letterSpacing: 1, marginTop: 2 }}>/ 100</div>
+      </div>
+    </div>
   );
 }
 
-// ── Module Score Bars ─────────────────────────────────────────────────────────
-function ModuleBars({ scores }) {
-  if (!scores || Object.keys(scores).length === 0) return (
-    <div style={{ color: "rgba(223,240,251,0.3)", fontSize: "0.75rem", textAlign: "center", padding: "20px 0" }}>
-      No module data
-    </div>
-  );
+// ── SHAP Contributions (CSS Bars) ─────────────────────────────────────────────
+function ShapContributions({ factors, color }) {
+  if (!factors || factors.length === 0) {
+    return (
+      <div style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.7rem", textAlign: "center", padding: "10px 0" }}>
+        No factor analysis data available
+      </div>
+    );
+  }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      {Object.entries(scores).sort(([, a], [, b]) => b - a).map(([mod, val]) => {
-        const pct = Math.min(100, Math.max(0, val));
-        const color = pct >= 75 ? "#EF4444" : pct >= 50 ? "#F97316" : pct >= 25 ? "#EAB308" : "#10B981";
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {factors.sort((a, b) => b.value - a.value).map((f, i) => {
+        const val = Math.min(100, Math.max(0, f.value));
+        const magnitudeColor = val > 50 ? "#EF4444" : val > 20 ? "#EAB308" : "#2DD4BF";
+
         return (
-          <div key={mod}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-              <span style={{ fontSize: "0.7rem", color: "rgba(91,196,239,0.8)", letterSpacing: "0.5px" }}>
-                {MODULE_LABELS[mod] || mod}
-              </span>
-              <span style={{ fontSize: "0.7rem", color, fontWeight: 700 }}>{pct.toFixed(0)}</span>
+          <div key={i}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+              <span style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.6)", fontWeight: 500 }}>{f.name}</span>
+              <span style={{ fontSize: "0.72rem", color: magnitudeColor, fontWeight: 700 }}>{val.toFixed(1)}%</span>
             </div>
-            <div style={{ height: 5, borderRadius: 3, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+            <div style={{ height: 6, background: "rgba(255,255,255,0.03)", borderRadius: 3, overflow: "hidden" }}>
               <div style={{
-                height: "100%", width: `${pct}%`, borderRadius: 3,
-                background: `linear-gradient(90deg, ${color}88, ${color})`,
-                boxShadow: `0 0 8px ${color}55`,
-                transition: "width 0.6s ease"
+                height: "100%", width: `${val}%`, background: magnitudeColor,
+                borderRadius: 2, transition: "width 0.8s ease-out",
+                boxShadow: `0 0 10px ${magnitudeColor}33`
               }} />
             </div>
           </div>
@@ -94,12 +92,12 @@ function ModuleBars({ scores }) {
   );
 }
 
-// ── Radar Chart ───────────────────────────────────────────────────────────────
+// ── Radar Chart (Cleaned up) ───────────────────────────────────────────────────
 function RadarChart({ scores }) {
   const entries = Object.entries(scores || {}).slice(0, 8);
   if (entries.length < 3) return null;
 
-  const cx = 110, cy = 110, r = 80;
+  const cx = 110, cy = 110, r = 70;
   const n = entries.length;
   const points = entries.map(([, val], i) => {
     const angle = (2 * Math.PI * i) / n - Math.PI / 2;
@@ -121,22 +119,20 @@ function RadarChart({ scores }) {
             const a = (2 * Math.PI * i) / n - Math.PI / 2;
             return { x: cx + r * f * Math.cos(a), y: cy + r * f * Math.sin(a) };
           }))}
-          fill="none" stroke="rgba(0,212,255,0.08)" strokeWidth={1}
+          fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth={1}
         />
       ))}
-      {outline.map((p, i) => (
-        <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="rgba(0,212,255,0.08)" strokeWidth={1} />
-      ))}
-      <polygon points={poly(points)} fill="rgba(0,212,255,0.1)" stroke="#00d4ff" strokeWidth={1.5}
-        style={{ filter: "drop-shadow(0 0 6px rgba(0,212,255,0.3))" }} />
+      <polygon points={poly(points)} fill="rgba(0,212,255,0.15)" stroke="#00d4ff" strokeWidth={2}
+        style={{ filter: "drop-shadow(0 0 10px rgba(0,212,255,0.2))" }} />
       {outline.map((p, i) => {
         const [mod] = entries[i];
-        const lx = cx + (r + 16) * Math.cos((2 * Math.PI * i) / n - Math.PI / 2);
-        const ly = cy + (r + 16) * Math.sin((2 * Math.PI * i) / n - Math.PI / 2);
+        const label = (MODULE_LABELS[mod] || mod).slice(0, 10).toUpperCase();
+        const lx = cx + (r + 18) * Math.cos((2 * Math.PI * i) / n - Math.PI / 2);
+        const ly = cy + (r + 18) * Math.sin((2 * Math.PI * i) / n - Math.PI / 2);
         return (
           <text key={i} x={lx} y={ly} textAnchor="middle" dominantBaseline="middle"
-            fill="rgba(91,196,239,0.7)" fontSize={8} fontFamily="'Courier New',monospace">
-            {(MODULE_LABELS[mod] || mod).split(" ")[0].toUpperCase()}
+            fill="rgba(223,240,251,0.4)" fontSize={7} fontWeight={700} fontFamily="'Inter', sans-serif">
+            {label}
           </text>
         );
       })}
@@ -144,14 +140,12 @@ function RadarChart({ scores }) {
   );
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
 export default function AlertDetailPage() {
   const { bucket, id } = useParams();
   const navigate = useNavigate();
   const [alert, setAlert] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [debugOpen, setDebugOpen] = useState(false);
 
   const isFraud = bucket === "fraud";
   const accentColor = isFraud ? "#EF4444" : "#10B981";
@@ -185,59 +179,64 @@ export default function AlertDetailPage() {
   const body       = rec.email_text  || rec.snippet   || "";
   const ts         = alert?.received_at || "";
   const modules    = tr.module_scores || rec.module_scores || {};
-  const topFactors = tr.top_factors  || rec.top_factors  || [];
-  const explanation = tr.explanation || rec.explanation || "";
+  const topFactors  = tr.feature_importance 
+    ? Object.entries(tr.feature_importance).map(([name, value]) => ({ name, value }))
+    : (tr.top_factors || rec.top_factors || []).map(f => ({ name: f, value: 0 }));
   const bandColor  = BAND_COLOR[band] || "#888";
-  const bandBg     = BAND_BG[band]    || "rgba(100,100,100,0.05)";
-  const bandIcon   = BAND_ICON[band]  || "❓";
   const actionColor = ACTION_COLOR[action] || "#888";
+
+  const cleanBody = body.replace(/https?:\/\/\S{60,}/g, '[link]');
 
   return (
     <div style={{
       minHeight: "100vh",
-      background: "radial-gradient(ellipse 80% 50% at 50% 0%, #050f1e 0%, #020810 60%, #000 100%)",
+      background: "#03070b",
       color: "#dff0fb",
-      fontFamily: "'Courier New', monospace",
-      padding: "0 0 80px 0"
+      fontFamily: "'Inter', sans-serif",
+      paddingBottom: 80
     }}>
-      {/* Header */}
+      {/* ── Sub-Header ───────────────────────────────────────────────────── */}
       <div style={{
         position: "sticky", top: 0, zIndex: 100,
-        background: "rgba(2,8,16,0.85)",
+        background: "rgba(3,7,11,0.92)",
         backdropFilter: "blur(20px)",
-        borderBottom: "1px solid rgba(0,212,255,0.12)",
-        padding: "0 32px", height: 60,
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        padding: "0 32px", height: 56,
         display: "flex", alignItems: "center", justifyContent: "space-between"
       }}>
         <button
           onClick={() => navigate(`/alerts/${bucket}`)}
           style={{
-            background: "none", border: "1px solid rgba(0,212,255,0.25)",
-            color: "#00d4ff", fontFamily: "'Courier New', monospace",
-            fontSize: "0.75rem", letterSpacing: "1.5px", padding: "6px 18px",
-            borderRadius: 6, cursor: "pointer", transition: "all 0.2s"
+            background: "none", border: "1px solid rgba(255,255,255,0.15)",
+            color: "rgba(255,255,255,0.6)", fontFamily: "'Courier New', monospace",
+            fontSize: "0.7rem", letterSpacing: "1.2px", padding: "5px 14px",
+            borderRadius: 5, cursor: "pointer", transition: "all 0.2s"
           }}
-          onMouseEnter={e => e.currentTarget.style.background = "rgba(0,212,255,0.1)"}
-          onMouseLeave={e => e.currentTarget.style.background = "none"}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+            e.currentTarget.style.color = "#fff";
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = "none";
+            e.currentTarget.style.color = "rgba(255,255,255,0.6)";
+          }}
         >
-          ← BACK TO {isFraud ? "FRAUD" : "SAFE"} ALERTS
+          ← BACK TO FRAUD ALERTS
         </button>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 6, height: 6, borderRadius: "50%", background: accentColor, boxShadow: `0 0 8px ${accentColor}` }} />
-          <span style={{ fontSize: "0.7rem", letterSpacing: "2px", color: "rgba(223,240,251,0.5)" }}>
-            TRIDENT · ALERT ANALYSIS
-          </span>
-        </div>
+        <span style={{ fontSize: "0.65rem", letterSpacing: "2.5px", color: "rgba(255,255,255,0.3)", fontWeight: 700 }}>
+          TRIDENT · <span style={{ color: "#dff0fb" }}>ALERT ANALYSIS</span>
+        </span>
       </div>
 
       {loading && (
-        <div style={{ textAlign: "center", padding: "120px 0", color: "rgba(0,212,255,0.5)", letterSpacing: "2px", fontSize: "0.8rem" }}>
-          LOADING ANALYSIS...
+        <div style={{ textAlign: "center", padding: "120px 0", color: "rgba(255,255,255,0.3)", letterSpacing: "2px", fontSize: "0.8rem" }}>
+          LOADING ANALYSIS DATA...
         </div>
       )}
+
       {error && (
-        <div style={{ maxWidth: 900, margin: "40px auto", padding: "0 32px" }}>
+        <div style={{ maxWidth: 1200, margin: "40px auto", padding: "0 32px" }}>
           <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 10, padding: "20px 24px", color: "#EF4444", fontSize: "0.8rem" }}>
             ⚠ {error}
           </div>
@@ -245,102 +244,130 @@ export default function AlertDetailPage() {
       )}
 
       {!loading && !error && alert && (
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 32px 0" }}>
+        <div style={{ maxWidth: 1300, margin: "0 auto", padding: "32px" }}>
 
-          {/* Subject + band badge */}
-          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 32, flexWrap: "wrap" }}>
-            <span style={{ fontSize: "1.4rem" }}>{bandIcon}</span>
-            <span style={{ background: `${bandColor}22`, color: bandColor, padding: "4px 14px", borderRadius: 6, fontSize: "0.65rem", fontWeight: 700, letterSpacing: "1px" }}>{band}</span>
-            <span style={{ background: `${actionColor}18`, color: actionColor, padding: "4px 14px", borderRadius: 6, fontSize: "0.65rem", fontWeight: 700, letterSpacing: "1px", border: `1px solid ${actionColor}33` }}>{action}</span>
-            <span style={{ fontSize: "1rem", fontWeight: 700, color: "#dff0fb", flex: 1 }}>{subject}</span>
+          {/* ── Top Hero Row ──────────────────────────────────────────────── */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32, gap: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <h1 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#fff", margin: 0, letterSpacing: "-0.02em" }}>{subject}</h1>
+              <span style={{
+                background: `${bandColor}1A`, color: bandColor, padding: "3px 10px", borderRadius: 4,
+                fontSize: "0.6rem", fontWeight: 800, letterSpacing: "1px", border: `1px solid ${bandColor}44`
+              }}>{band}</span>
+            </div>
+            <button style={{
+              background: "#F97316", color: "#000", border: "none", padding: "8px 20px",
+              borderRadius: 6, fontSize: "0.75rem", fontWeight: 800, letterSpacing: "1px",
+              cursor: "pointer", boxShadow: "0 4px 14px rgba(249,115,22,0.3)"
+            }}>ESCALATE ALERT</button>
           </div>
 
-          {/* Two-column layout */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+          <div style={{ display: "flex", width: "100%", overflow: "hidden", gap: 32, height: "calc(100vh - 140px)" }}>
 
-            {/* LEFT — Email message */}
-            <div style={{ background: "rgba(3,13,28,0.7)", border: `1px solid rgba(14,165,233,0.18)`, borderLeft: `2px solid rgba(14,165,233,0.4)`, borderRadius: 14, padding: "24px 24px" }}>
-              <div style={{ fontSize: "0.6rem", letterSpacing: "3px", color: "rgba(91,196,239,0.5)", marginBottom: 16 }}>EMAIL MESSAGE</div>
-              <div style={{ fontSize: "1rem", fontWeight: 700, marginBottom: 10, color: "#dff0fb" }}>{subject}</div>
-              <div style={{ fontSize: "0.72rem", color: "rgba(100,148,193,0.8)", marginBottom: 18 }}>
-                <span style={{ color: "rgba(91,196,239,0.7)" }}>From:</span> {sender}
-                &nbsp;·&nbsp;
-                <span style={{ color: "rgba(91,196,239,0.7)" }}>At:</span> {ts}
-              </div>
-              <div style={{ background: "rgba(0,0,0,0.4)", borderRadius: 10, padding: 18, border: "1px solid rgba(14,150,210,0.10)", maxHeight: "50vh", overflowY: "auto" }}>
-                <pre style={{ fontFamily: "'Courier New', monospace", fontSize: "0.8rem", color: "rgba(224,242,254,0.9)", lineHeight: 1.7, whiteSpace: "pre-wrap", margin: 0 }}>
-                  {body || "(No message content available)"}
-                </pre>
-              </div>
-            </div>
-
-            {/* RIGHT — Analysis */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              <div style={{ fontSize: "0.6rem", letterSpacing: "3px", color: "rgba(91,196,239,0.5)" }}>TRIDENT ANALYSIS</div>
-
-              <div style={{ background: bandBg, border: `1px solid ${bandColor}28`, borderRadius: 14, padding: "24px 20px", textAlign: "center" }}>
-                <RiskGauge score={score} band={band} />
-                {tr.confidence != null && (
-                  <div style={{ fontSize: "0.7rem", color: "rgba(223,240,251,0.4)", marginTop: 6, letterSpacing: "1px" }}>
-                    CONFIDENCE: {(tr.confidence * 100).toFixed(0)}%
-                  </div>
-                )}
-                {tr.processing_time_ms != null && (
-                  <div style={{ fontSize: "0.65rem", color: "rgba(223,240,251,0.3)", letterSpacing: "1px" }}>
-                    PROCESSED IN {tr.processing_time_ms.toFixed(0)} ms
-                  </div>
-                )}
+            {/* LEFT — Email Viewer (60%) */}
+            <div style={{ width: "60%", minWidth: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 16, height: "100%", paddingRight: 8 }}>
+              <div style={{ fontSize: "0.62rem", letterSpacing: "3px", color: "rgba(255,255,255,0.4)", fontWeight: 700 }}>
+                EMAIL MESSAGE
               </div>
 
-              {Object.keys(modules).length > 0 && (
-                <div style={{ background: "rgba(3,13,28,0.7)", border: "1px solid rgba(14,165,233,0.12)", borderRadius: 14, padding: "20px 20px" }}>
-                  <div style={{ fontSize: "0.6rem", letterSpacing: "3px", color: "rgba(91,196,239,0.5)", marginBottom: 14 }}>MODULE SCORES</div>
-                  <ModuleBars scores={modules} />
-                </div>
-              )}
-
-              {topFactors.length > 0 && (
-                <div style={{ background: "rgba(3,13,28,0.7)", border: "1px solid rgba(14,165,233,0.12)", borderRadius: 14, padding: "20px 20px" }}>
-                  <div style={{ fontSize: "0.6rem", letterSpacing: "3px", color: "rgba(91,196,239,0.5)", marginBottom: 14 }}>TOP RISK FACTORS</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {topFactors.map((f, i) => (
-                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: bandColor, flexShrink: 0 }} />
-                        <span style={{ fontSize: "0.78rem", color: "rgba(223,240,251,0.8)" }}>{f}</span>
+              <div style={{
+                background: "#fdfdfd", color: "#1a1c21", borderRadius: 16, overflow: "hidden",
+                boxShadow: "0 20px 40px rgba(0,0,0,0.4)", display: "flex", flexDirection: "column"
+              }}>
+                {/* Email Header */}
+                <div style={{ padding: "32px 32px 24px", borderBottom: "1px solid #f0f0f0" }}>
+                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+                      <h2 style={{ fontSize: "1.25rem", fontWeight: 700, margin: 0, flex: 1 }}>{subject}</h2>
+                      <div style={{ display: "flex", gap: 8 }}>
+                         <span style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fee2e2", padding: "2px 8px", borderRadius: 4, fontSize: "0.6rem", fontWeight: 800 }}>HIGH</span>
+                         <span style={{ background: "#fff7ed", color: "#c2410c", border: "1px solid #ffedd5", padding: "2px 8px", borderRadius: 4, fontSize: "0.6rem", fontWeight: 800 }}>ESCALATE</span>
                       </div>
-                    ))}
-                  </div>
+                   </div>
+
+                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 20, background: "#f0f2f5", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: "#475569" }}>
+                        {sender.charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: "0.9rem", fontWeight: 700 }}>{sender.split("<")[0].trim()}</div>
+                        <div style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                          {sender.includes("<") ? sender.match(/<(.+?)>/)?.[1] : sender}
+                        </div>
+                      </div>
+                      <div style={{ fontSize: "0.72rem", color: "#94a3b8" }}>{ts}</div>
+                   </div>
                 </div>
-              )}
-            </div>
-          </div>
 
-          {explanation && (
-            <div style={{ marginTop: 24, background: "rgba(3,13,28,0.7)", border: "1px solid rgba(14,165,233,0.12)", borderRadius: 14, padding: "20px 24px" }}>
-              <div style={{ fontSize: "0.6rem", letterSpacing: "3px", color: "rgba(91,196,239,0.5)", marginBottom: 10 }}>EXPLANATION</div>
-              <p style={{ fontSize: "0.82rem", lineHeight: 1.8, color: "rgba(223,240,251,0.75)", margin: 0 }}>{explanation}</p>
-            </div>
-          )}
+                {/* Email Body */}
+                <div style={{ padding: "32px", minHeight: 300, overflow: "hidden" }}>
+                   <div style={{
+                     fontSize: "0.95rem", color: "#334155", lineHeight: 1.6, whiteSpace: "pre-wrap",
+                     wordBreak: "break-word", overflowWrap: "break-word", fontFamily: "'Inter', sans-serif",
+                     overflow: "hidden"
+                   }}>
+                     {cleanBody || "(No message content available)"}
+                   </div>
 
-          {Object.keys(modules).length >= 3 && (
-            <div style={{ marginTop: 24, background: "rgba(3,13,28,0.7)", border: "1px solid rgba(14,165,233,0.12)", borderRadius: 14, padding: "20px 24px", textAlign: "center" }}>
-              <div style={{ fontSize: "0.6rem", letterSpacing: "3px", color: "rgba(91,196,239,0.5)", marginBottom: 16 }}>MODULE RADAR</div>
-              <RadarChart scores={modules} />
+                   {/* Long Link Mock/Example to show truncation */}
+                   <div style={{ marginTop: 40, paddingTop: 24, borderTop: "1px solid #f1f5f9" }}>
+                      <div style={{ fontSize: "0.7rem", color: "#94a3b8", marginBottom: 8, fontWeight: 700, letterSpacing: 0.5 }}>SUSPICIOUS URL DETECTED:</div>
+                      <div style={{
+                        background: "#fff1f2", color: "#e11d48", padding: "8px 12px", borderRadius: 6,
+                        fontSize: "0.75rem", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                        border: "1px solid #ffe4e6"
+                      }}>
+                        https://secure-login-update-auth-v2.trident-security-validation-node-8821.io/auth/login?session_id=992817726351&redirect_uri=app_home_dashboard_production_version
+                      </div>
+                   </div>
+                </div>
+              </div>
             </div>
-          )}
 
-          <div style={{ marginTop: 24 }}>
-            <button
-              onClick={() => setDebugOpen(o => !o)}
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", color: "rgba(223,240,251,0.4)", fontFamily: "'Courier New', monospace", fontSize: "0.7rem", letterSpacing: "1.5px", padding: "8px 20px", borderRadius: 8, cursor: "pointer", width: "100%", textAlign: "left" }}
-            >
-              {debugOpen ? "▾" : "▸"} ADVANCED / DEBUG INFO
-            </button>
-            {debugOpen && (
-              <pre style={{ marginTop: 8, background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: 20, fontSize: "0.7rem", color: "rgba(223,240,251,0.6)", overflowX: "auto", lineHeight: 1.6 }}>
-                {JSON.stringify(alert, null, 2)}
-              </pre>
-            )}
+            {/* RIGHT — Analysis Panel (40%) */}
+            <div style={{ width: "40%", minWidth: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 24, height: "100%", paddingRight: 8 }}>
+
+              {/* Risk Score Card */}
+              <div style={{
+                background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+                borderRadius: 16, padding: "32px 24px", display: "flex", flexDirection: "column", alignItems: "center"
+              }}>
+                <div style={{ alignSelf: "flex-start", fontSize: "0.62rem", letterSpacing: "3px", color: "rgba(255,255,255,0.35)", fontWeight: 700, marginBottom: 24 }}>
+                  THREAT MAGNITUDE
+                </div>
+                <RiskArc score={score} band={band} />
+                <div style={{
+                   background: `${bandColor}1A`, color: bandColor, padding: "5px 16px", borderRadius: 20,
+                   fontSize: "0.65rem", fontWeight: 800, letterSpacing: "1.5px", marginTop: 20, border: `1px solid ${bandColor}33`
+                }}>
+                  {band} SEVERITY
+                </div>
+              </div>
+
+              {/* SHAP Contributions */}
+              <div style={{
+                background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+                borderRadius: 16, padding: "28px 24px"
+              }}>
+                <div style={{ fontSize: "0.62rem", letterSpacing: "3px", color: "rgba(255,255,255,0.35)", fontWeight: 700, marginBottom: 20 }}>
+                  SHAP CONTRIBUTIONS
+                </div>
+                <ShapContributions factors={topFactors} color={bandColor} />
+              </div>
+
+              {/* Module Radar */}
+              <div style={{
+                background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+                borderRadius: 16, padding: "28px 24px"
+              }}>
+                <div style={{ fontSize: "0.62rem", letterSpacing: "3px", color: "rgba(255,255,255,0.35)", fontWeight: 700, marginBottom: 24 }}>
+                   MODULE RADAR
+                </div>
+                <div style={{ background: "rgba(0,0,0,0.2)", borderRadius: 12, padding: "10px", border: "1px solid rgba(255,255,255,0.03)" }}>
+                  <RadarChart scores={modules} />
+                </div>
+              </div>
+
+            </div>
           </div>
 
         </div>
