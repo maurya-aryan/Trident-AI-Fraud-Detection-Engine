@@ -236,12 +236,6 @@ function EndSection() {
           <div className="text-center">
             <p>System Online. Copyright © 2026 TRIDENT AI Engine.</p>
           </div>
-          <div className="flex gap-3 items-center pointer-events-auto">
-            <span className="text-white/20">Built by</span>
-            <span className="text-white/70 hover:text-accent transition-colors">Aryan Maurya</span>
-            <span className="text-white/20">&</span>
-            <span className="text-white/70 hover:text-accent transition-colors">Iyad</span>
-          </div>
         </footer>
 
       </div>
