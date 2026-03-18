@@ -37,3 +37,10 @@ data/tokens.json
 # Environment/Build
 .venv
 __pycache__
+
+# Large media assets (served via frontend public/ or CDN)
+assets/
+logo/
+*.mp4
+*.glb
+frontend/node_modules/
