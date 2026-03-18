@@ -33,3 +33,7 @@ Thumbs.db
 *.env
 .aider*
 data/tokens.json
+
+# Environment/Build
+.venv
+__pycache__
