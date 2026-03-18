@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-
-const API_URL = 'http://localhost:8000';
+import { API_URL } from '../constants';
 
 const lineClass = (type) => ({
   command: 'term-command',

@@ -1,4 +1,5 @@
 # modules/__init__.py
+from .base import BaseModule, ModuleResult
 from .ai_text_detection import AITextDetector
 from .credential_exposure import CredentialDetector
 from .malware_scanner import MalwareScanner
@@ -10,6 +11,8 @@ from .campaign_graph import CampaignGraph
 from .shap_explainer import SHAPExplainer
 
 __all__ = [
+    "BaseModule",
+    "ModuleResult",
     "AITextDetector",
     "CredentialDetector",
     "MalwareScanner",
